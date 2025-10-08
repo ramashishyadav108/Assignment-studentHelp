@@ -26,15 +26,30 @@ async function safeGenerateContent(prompt: string, candidates?: string[]) {
         throw new Error(`Prompt exceeds token limit of 1,048,576 (got ${totalTokens})`);
       }
       const result = await model.generateContent(prompt);
+
+      // Validate that we got a response
+      if (!result || !result.response) {
+        throw new Error('Empty response from model');
+      }
+
       return result;
     } catch (err: any) {
       lastErr = err;
-      console.warn(`Model ${modelName} failed: ${err?.message || err}`);
+      console.error(`Model ${modelName} failed:`, {
+        message: err?.message || 'Unknown error',
+        status: err?.status,
+        statusText: err?.statusText,
+        details: err?.details || err
+      });
       continue;
     }
   }
-  console.error('All model candidates failed:', lastErr);
-  throw new Error('Unable to generate content. Please try again later.');
+  const errorMessage = lastErr?.message || 'Unknown error occurred';
+  console.error('All model candidates failed. Last error:', {
+    message: errorMessage,
+    error: lastErr
+  });
+  throw new Error(`Gemini API error: ${errorMessage}. Please check your API key and try again.`);
 }
 
 export async function generateQuizQuestions(
@@ -75,13 +90,24 @@ Return the response in the following JSON format:
   try {
     const result = await safeGenerateContent(prompt);
     const response = result.response.text();
+
+    if (!response || response.trim() === '') {
+      throw new Error('Empty response from Gemini API');
+    }
+
     // Extract JSON from response (handle markdown code blocks)
     const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/\{[\s\S]*\}/);
     const jsonText = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : response;
-    return JSON.parse(jsonText);
+
+    try {
+      return JSON.parse(jsonText);
+    } catch (parseErr) {
+      console.error('Failed to parse Gemini response:', response.substring(0, 500));
+      throw new Error('Invalid JSON response from Gemini API');
+    }
   } catch (err: any) {
     console.error('Failed to generate quiz questions:', err);
-    throw new Error('Unable to generate quiz questions due to model error.');
+    throw new Error(err.message || 'Unable to generate quiz questions due to model error.');
   }
 }
 
@@ -100,10 +126,16 @@ Provide a clear, educational explanation that helps the student understand the c
 
   try {
     const result = await safeGenerateContent(prompt);
-    return result.response.text();
+    const response = result.response.text();
+
+    if (!response || response.trim() === '') {
+      throw new Error('Empty response from Gemini API');
+    }
+
+    return response;
   } catch (err: any) {
     console.error('Failed to generate answer explanation:', err);
-    throw new Error('Unable to generate answer explanation due to model error.');
+    throw new Error(err.message || 'Unable to generate answer explanation due to model error.');
   }
 }
 
@@ -125,7 +157,7 @@ ${truncatedContext}
     prompt += `Relevant excerpts from the PDF:\n`;
     let totalChunkLength = 0;
     // Limit to 5 chunks to avoid token overflow
-    pdfChunks.slice(0, 5).forEach((chunk, idx) => {
+    pdfChunks.slice(0, 5).forEach((chunk) => {
       const chunkContent = chunk.content.substring(0, 10000);
       if (totalChunkLength + chunkContent.length <= 400000) {
         prompt += `\n[Page ${chunk.pageNumber}]: "${chunkContent}"\n`;
@@ -141,10 +173,16 @@ Please provide a helpful, educational response. If the answer is in the PDF, cit
 
   try {
     const result = await safeGenerateContent(prompt);
-    return result.response.text();
+    const response = result.response.text();
+
+    if (!response || response.trim() === '') {
+      throw new Error('Empty response from Gemini API');
+    }
+
+    return response;
   } catch (err: any) {
     console.error('Failed to generate chat response:', err);
-    throw new Error('Unable to generate response due to model error.');
+    throw new Error(err.message || 'Unable to generate response due to model error.');
   }
 }
 

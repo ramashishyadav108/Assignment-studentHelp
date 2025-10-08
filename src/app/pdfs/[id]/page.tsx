@@ -193,33 +193,57 @@ export default async function Page({ params }: Params) {
 	}
 
 	// Download PDF from Cloudinary to temp file for processing
-	const response = await fetch(pdf.filePath);
-	if (!response.ok) {
-		throw new Error('Failed to fetch PDF from Cloudinary');
-	}
-	const arrayBuffer = await response.arrayBuffer();
-	const buffer = Buffer.from(arrayBuffer);
-	
-	// Create temp file for processing
-	const { writeFile, unlink } = await import('fs/promises');
-	const fs = await import('fs');
-	const tempDir = path.join(process.cwd(), 'temp');
-	if (!fs.existsSync(tempDir)) {
-		fs.mkdirSync(tempDir, { recursive: true });
-	}
-	const tempFilePath = path.join(tempDir, `page-${Date.now()}-${pdf.fileName}`);
-	await writeFile(tempFilePath, buffer);
+	let metadata;
+	let chunks: PDFChunk[];
 
-	// Extract metadata and chunks
-	const metadata = await extractPDFText(tempFilePath);
-	const chunks = chunkPDFText(metadata.text, 1200).map((c) => ({
-		content: c.content,
-		pageNumber: c.pageNumber,
-		chunkIndex: c.chunkIndex,
-	})) as PDFChunk[];
+	try {
+		const response = await fetch(pdf.filePath);
+		if (!response.ok) {
+			console.error('Failed to fetch PDF from Cloudinary:', response.status, response.statusText);
+			throw new Error(`Failed to fetch PDF from Cloudinary: ${response.status} ${response.statusText}`);
+		}
+		const arrayBuffer = await response.arrayBuffer();
+		const buffer = Buffer.from(arrayBuffer);
 
-	// Clean up temp file
-	await unlink(tempFilePath);
+		// Create temp file for processing
+		const { writeFile, unlink } = await import('fs/promises');
+		const fs = await import('fs');
+		const tempDir = path.join(process.cwd(), 'temp');
+		if (!fs.existsSync(tempDir)) {
+			fs.mkdirSync(tempDir, { recursive: true });
+		}
+		const tempFilePath = path.join(tempDir, `page-${Date.now()}-${pdf.fileName}`);
+		await writeFile(tempFilePath, buffer);
+
+		// Extract metadata and chunks
+		metadata = await extractPDFText(tempFilePath);
+		chunks = chunkPDFText(metadata.text, 1200).map((c) => ({
+			content: c.content,
+			pageNumber: c.pageNumber,
+			chunkIndex: c.chunkIndex,
+		})) as PDFChunk[];
+
+		// Clean up temp file
+		await unlink(tempFilePath);
+	} catch (error: any) {
+		console.error('Error processing PDF:', {
+			message: error?.message,
+			pdfId: pdf.id,
+			filePath: pdf.filePath
+		});
+
+		// Return error page
+		const allPdfs = await prisma.pDF.findMany({
+			where: {
+				filePath: {
+					startsWith: 'https://',
+				},
+			},
+			select: { fileName: true }
+		});
+		const files = allPdfs.map(p => p.fileName);
+		return <ErrorPageClient id={id} files={files} />;
+	}
 
 	return (
 		<div className="min-h-screen bg-white">

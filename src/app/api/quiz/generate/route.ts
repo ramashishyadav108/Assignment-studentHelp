@@ -137,9 +137,17 @@ export async function POST(req: Request) {
       message: 'Quiz generated successfully',
     });
   } catch (error: any) {
-    console.error('Error generating quiz:', error);
+    console.error('Error generating quiz:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack,
+      name: error?.name
+    });
+
     return NextResponse.json(
-      { error: error.message || 'Failed to generate quiz' },
+      {
+        error: 'Failed to generate quiz',
+        details: error?.message || 'Unknown error occurred',
+      },
       { status: 500 }
     );
   }

@@ -5,6 +5,18 @@ import { generateChatResponse } from '@/lib/gemini';
 import { findRelevantChunks } from '@/lib/pdf-processor';
 import { searchYouTubeVideos } from '@/lib/youtube';
 
+// Handle OPTIONS for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
@@ -101,10 +113,18 @@ export async function POST(req: Request) {
       chatId: chat.id,
       message: assistantMessage,
     });
-  } catch (error) {
-    console.error('Error in chat:', error);
+  } catch (error: any) {
+    console.error('Error in chat:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack,
+      name: error?.name
+    });
+
     return NextResponse.json(
-      { error: 'Failed to process message' },
+      {
+        error: 'Failed to process message',
+        details: error?.message || 'Unknown error occurred',
+      },
       { status: 500 }
     );
   }

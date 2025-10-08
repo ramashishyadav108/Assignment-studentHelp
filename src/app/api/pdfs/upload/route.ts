@@ -124,8 +124,8 @@ export async function POST(req: Request) {
     let topics: string[] = [];
     try {
       topics = await extractKeyTopics(text.substring(0, 5000));
-    } catch (error) {
-      console.error('Error extracting topics:', error);
+    } catch (error: any) {
+      console.error('Error extracting topics:', error?.message || error);
       // Continue without topics if extraction fails
     }
 
@@ -141,12 +141,18 @@ export async function POST(req: Request) {
       },
     });
   } catch (error: any) {
-    // Only log non-connection errors to avoid console spam
-    if (!error.message?.includes("Can't reach database server")) {
-      console.error('Error uploading PDF:', error);
-    }
+    // Log detailed error information
+    console.error('Error uploading PDF:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack,
+      name: error?.name
+    });
+
     return NextResponse.json(
-      { error: 'Failed to upload PDF' },
+      {
+        error: 'Failed to upload PDF',
+        details: error?.message || 'Unknown error occurred',
+      },
       { status: 500 }
     );
   }
