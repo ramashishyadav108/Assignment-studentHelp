@@ -1,0 +1,224 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// User model (synced with Clerk)
+model User {
+  id            String    @id @default(cuid())
+  clerkId       String    @unique
+  email         String    @unique
+  name          String?
+  imageUrl      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  pdfs          PDF[]
+  quizzes       Quiz[]
+  quizAttempts  QuizAttempt[]
+  chats         Chat[]
+  progress      Progress[]
+  
+  @@index([clerkId])
+  @@index([email])
+}
+
+// PDF Documents
+model PDF {
+  id            String    @id @default(cuid())
+  title         String
+  fileName      String
+  filePath      String
+  fileSize      Int
+  totalPages    Int
+  subject       String?
+  grade         String?
+  source        String?   // e.g., "NCERT", "User Upload"
+  vocabulary    Json?     // Vocabulary used for embeddings
+  isPublic      Boolean   @default(false)
+  uploadedAt    DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  chunks        PDFChunk[]
+  quizzes       Quiz[]
+  chatMessages  ChatMessage[]
+  
+  @@index([userId])
+  @@index([subject, grade])
+}
+
+// PDF chunks for RAG
+model PDFChunk {
+  id            String    @id @default(cuid())
+  pdfId         String
+  content       String    @db.Text
+  pageNumber    Int
+  chunkIndex    Int
+  embedding     Float[]   // Vector embedding
+  createdAt     DateTime  @default(now())
+  
+  pdf           PDF       @relation(fields: [pdfId], references: [id], onDelete: Cascade)
+  
+  @@index([pdfId])
+  @@index([pageNumber])
+}
+
+// Quiz
+model Quiz {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  questionType  String    // "MCQ", "SAQ", "LAQ", "Mixed"
+  difficulty    String    @default("Medium") // "Easy", "Medium", "Hard"
+  totalQuestions Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  pdfId         String?
+  pdf           PDF?      @relation(fields: [pdfId], references: [id], onDelete: SetNull)
+  
+  // Relations
+  questions     Question[]
+  attempts      QuizAttempt[]
+  
+  @@index([userId])
+  @@index([pdfId])
+}
+
+// Question
+model Question {
+  id            String    @id @default(cuid())
+  quizId        String
+  type          String    // "MCQ", "SAQ", "LAQ"
+  questionText  String    @db.Text
+  options       Json?     // For MCQs: ["A", "B", "C", "D"]
+  correctAnswer String    @db.Text
+  explanation   String?   @db.Text
+  pageReference Int?
+  points        Int       @default(1)
+  order         Int
+  createdAt     DateTime  @default(now())
+  
+  quiz          Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  answers       Answer[]
+  
+  @@index([quizId])
+}
+
+// Quiz Attempt
+model QuizAttempt {
+  id            String    @id @default(cuid())
+  quizId        String
+  userId        String
+  score         Float
+  totalScore    Float
+  percentage    Float
+  timeTaken     Int?      // in seconds
+  completedAt   DateTime  @default(now())
+  
+  quiz          Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  answers       Answer[]
+  
+  @@index([userId])
+  @@index([quizId])
+  @@index([completedAt])
+}
+
+// Answer
+model Answer {
+  id            String    @id @default(cuid())
+  attemptId     String
+  questionId    String
+  userAnswer    String    @db.Text
+  isCorrect     Boolean
+  pointsEarned  Float
+  createdAt     DateTime  @default(now())
+  
+  attempt       QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question      Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+// Chat
+model Chat {
+  id            String    @id @default(cuid())
+  title         String    @default("New Chat")
+  userId        String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  messages      ChatMessage[]
+  
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+// Chat Message
+model ChatMessage {
+  id            String    @id @default(cuid())
+  chatId        String
+  role          String    // "user" or "assistant"
+  content       String    @db.Text
+  pdfReferences Json?     // Array of {pdfId, pageNumber, quote}
+  videoReferences Json?   // Array of {videoId, title, thumbnail}
+  createdAt     DateTime  @default(now())
+  
+  chat          Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  
+  pdfId         String?
+  pdf           PDF?      @relation(fields: [pdfId], references: [id], onDelete: SetNull)
+  
+  @@index([chatId])
+  @@index([createdAt])
+}
+
+// Progress Tracking
+model Progress {
+  id            String    @id @default(cuid())
+  userId        String
+  subject       String
+  topic         String
+  totalQuizzes  Int       @default(0)
+  totalScore    Float     @default(0)
+  averageScore  Float     @default(0)
+  strengths     Json?     // Array of topic names
+  weaknesses    Json?     // Array of topic names
+  lastActivity  DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, subject, topic])
+  @@index([userId])
+  @@index([lastActivity])
+}
