@@ -7,9 +7,6 @@ import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, List, ChevronDown
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Configure PDF.js worker - use CDN to match react-pdf's pdfjs version
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
 interface PDFViewerProps {
   pdfUrl: string;
   fileName: string;
@@ -87,6 +84,13 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Configure PDF.js worker only on client-side to avoid SSR issues
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    }
+  }, []);
 
   async function onDocumentLoadSuccess({ numPages }: any) {
     setNumPages(numPages);

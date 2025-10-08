@@ -1,6 +1,6 @@
 import React from 'react';
 import { extractPDFText, chunkPDFText, PDFChunk } from '@/lib/pdf-processor';
-import PdfViewerWithChat from '@/components/pdf-viewer-with-chat';
+import PdfViewerWithChatWrapper from '@/components/PdfViewerWithChatWrapper';
 import path from 'path';
 import { prisma } from '@/lib/prisma';
 import { FileX, File, CheckCircle2, Sparkles, ArrowRight } from 'lucide-react';
@@ -248,7 +248,7 @@ export default async function Page({ params }: Params) {
 	return (
 		<div className="min-h-screen bg-white">
 			<SuccessHeaderClient metadata={metadata} fileName={pdf.fileName} />
-			<PdfViewerWithChat pdfChunks={chunks} fileName={pdf.fileName} pdfId={pdf.id} />
+			<PdfViewerWithChatWrapper pdfChunks={chunks} fileName={pdf.fileName} pdfId={pdf.id} />
 		</div>
 	);
 }

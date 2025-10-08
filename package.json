@@ -1,5 +1,4 @@
-# Link the local folder to an existing or new Vercel project
-vercel link{
+{
   "name": "a4",
   "version": "0.1.0",
   "private": true,
