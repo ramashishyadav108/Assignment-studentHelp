@@ -3,7 +3,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageSquare, Sparkles, X, List } from 'lucide-react';
 import YouTubeRecommender from './YouTubeRecommender';
-import PDFViewer from './PDFViewer';
+import dynamic from 'next/dynamic';
+
+// Dynamic import to prevent SSR issues with PDF.js and DOMMatrix
+const PDFViewer = dynamic(() => import('./PDFViewer'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center space-y-3">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p className="text-gray-600 text-sm">Loading PDF viewer...</p>
+      </div>
+    </div>
+  )
+});
 
 interface PDFChunk {
   content: string;
