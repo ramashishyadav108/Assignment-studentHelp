@@ -1,11 +1,22 @@
 import { v2 as cloudinary } from 'cloudinary';
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Configure Cloudinary only when env vars are present. This prevents build-time
+// failures in environments (like Vercel) where server envs might be missing
+// during certain build steps. Callers should handle exceptions when attempting
+// to upload without proper configuration.
+const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUD_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUD_SECRET = process.env.CLOUDINARY_API_SECRET;
+
+if (!CLOUD_NAME || !CLOUD_KEY || !CLOUD_SECRET) {
+  console.warn('Cloudinary environment variables are not fully configured. PDF uploads will fail on the server unless you add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in Vercel environment variables.');
+} else {
+  cloudinary.config({
+    cloud_name: CLOUD_NAME,
+    api_key: CLOUD_KEY,
+    api_secret: CLOUD_SECRET,
+  });
+}
 
 /**
  * Upload a PDF file to Cloudinary

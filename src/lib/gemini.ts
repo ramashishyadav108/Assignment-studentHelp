@@ -1,10 +1,21 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not set');
+// Lazy initializer for GoogleGenerativeAI to avoid throwing at import time
+let genAI: ReturnType<typeof createGenAI> | null = null;
+
+function createGenAI(apiKey: string) {
+  return new GoogleGenerativeAI(apiKey);
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+function getGenAI() {
+  if (genAI) return genAI;
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
+    throw new Error('GEMINI_API_KEY is not set. Set it in your environment (Vercel -> Project -> Environment Variables)');
+  }
+  genAI = createGenAI(key);
+  return genAI;
+}
 
 // Default model candidates for educational chatbot
 function getModelCandidates(defaults: string[] = ['gemini-2.5-pro', 'gemini-2.5-flash']) {
@@ -19,7 +30,8 @@ async function safeGenerateContent(prompt: string, candidates?: string[]) {
   let lastErr: any = null;
   for (const modelName of candidateList) {
     try {
-      const model = genAI.getGenerativeModel({ model: modelName });
+      const client = getGenAI();
+      const model = client.getGenerativeModel({ model: modelName });
       // Check token count to avoid exceeding limits
       const { totalTokens } = await model.countTokens(prompt);
       if (totalTokens > 1048576) {

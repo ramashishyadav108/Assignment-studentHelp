@@ -112,3 +112,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Vercel deployment checklist
+
+When deploying to Vercel, make sure to add these environment variables in your Project Settings -> Environment Variables. Set the ones that are server-only as `Environment Variable` (not exposed as NEXT_PUBLIC).
+
+- DATABASE_URL (server-only)
+- CLERK_SECRET_KEY (server-only)
+- CLERK_WEBHOOK_SECRET (server-only) — required for Clerk webhooks
+- CLOUDINARY_CLOUD_NAME (server-only)
+- CLOUDINARY_API_KEY (server-only)
+- CLOUDINARY_API_SECRET (server-only)
+- GEMINI_API_KEY (server-only)
+- YOUTUBE_API_KEY (can be NEXT_PUBLIC if used client-side)
+- NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (public)
+- NEXT_PUBLIC_APP_URL (public) — set to your Vercel URL, e.g. https://your-project.vercel.app
+
+After adding the variables, redeploy the project (Trigger a new deployment from the Vercel dashboard or push a new commit). If you see 500 errors on API routes, check the Vercel function logs (Project -> Functions) for stack traces and missing env variables.
