@@ -4,25 +4,6 @@ import React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, List, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react';
 
-// Dynamically import react-pdf to avoid SSR issues
-let Document: any;
-let Page: any;
-let pdfjs: any;
-
-if (typeof window !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const reactPdf = require('react-pdf');
-  Document = reactPdf.Document;
-  Page = reactPdf.Page;
-  pdfjs = reactPdf.pdfjs;
-
-  // Import CSS only on client side
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  require('react-pdf/dist/Page/AnnotationLayer.css');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  require('react-pdf/dist/Page/TextLayer.css');
-}
-
 interface PDFViewerProps {
   pdfUrl: string;
   fileName: string;
@@ -101,10 +82,32 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
   const pageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Configure PDF.js worker only on client-side to avoid SSR issues
+  // State for dynamically loaded components
+  const [pdfComponents, setPdfComponents] = useState<{
+    Document: any;
+    Page: any;
+    pdfjs: any;
+  } | null>(null);
+
+  // Load react-pdf components only on client side
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+      import('react-pdf').then((module) => {
+        setPdfComponents({
+          Document: module.Document,
+          Page: module.Page,
+          pdfjs: module.pdfjs,
+        });
+
+        // Configure PDF.js worker
+        module.pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${module.pdfjs.version}/build/pdf.worker.min.mjs`;
+      });
+
+      // Import CSS files dynamically
+      // @ts-ignore - CSS imports work at runtime
+      import('react-pdf/dist/Page/AnnotationLayer.css');
+      // @ts-ignore - CSS imports work at runtime
+      import('react-pdf/dist/Page/TextLayer.css');
     }
   }, []);
 
@@ -112,8 +115,10 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
     setNumPages(numPages);
 
     // Try to extract outline/table of contents
+    if (!pdfComponents) return;
+
     try {
-      const loadingTask = pdfjs.getDocument(pdfUrl);
+      const loadingTask = pdfComponents.pdfjs.getDocument(pdfUrl);
       const pdf = await loadingTask.promise;
       const pdfOutline = await pdf.getOutline();
 
@@ -276,7 +281,7 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
   };
 
   // Don't render if react-pdf is not loaded (SSR protection)
-  if (!Document || !Page) {
+  if (!pdfComponents) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center space-y-3">
@@ -286,6 +291,8 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
       </div>
     );
   }
+
+  const { Document, Page } = pdfComponents;
 
   return (
     <div className="flex h-full">
