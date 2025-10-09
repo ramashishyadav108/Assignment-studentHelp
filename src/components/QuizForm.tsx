@@ -78,7 +78,7 @@ export default function QuizForm({ pdfs, recentAttempts }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="bg-gradient-to-br from-purple-50 via-white to-blue-50 py-6 pb-12 min-h-[calc(100vh-120px)]">
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
         {/* Page Header */}

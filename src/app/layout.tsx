@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
 
-  // Don't show general chatbot on PDF viewer pages
+  // Don't show general chatbot on PDF viewer pages with individual PDFs
   const isPdfViewerPage = pathname?.startsWith('/pdfs/') && pathname !== '/pdfs' && pathname !== '/pdfs/upload';
   
   // Don't show header on landing page (it has its own nav)
@@ -29,13 +29,13 @@ export default function RootLayout({
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
         </head>
-        <body className={`${inter.className} flex flex-col min-h-screen overflow-x-hidden`}>
+        <body className={`${inter.className} flex flex-col min-h-screen`}>
           {!isLandingPage && <Header />}
-          <main className="flex-1 flex flex-col">
+          <main className="flex-1">
             {children}
           </main>
-          {/* Show footer on all pages except PDF viewer with individual PDFs */}
-          {!isPdfViewerPage && <Footer />}
+          {/* Show footer on all pages */}
+          <Footer />
           {/* Show general chatbot on all pages except PDF viewer */}
           {!isPdfViewerPage && <GeneralChatbot />}
         </body>

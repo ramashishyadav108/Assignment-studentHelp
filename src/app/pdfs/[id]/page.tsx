@@ -120,10 +120,6 @@ function SuccessHeaderClient({ metadata, fileName }: { metadata: any; fileName: 
 					
 					{/* Status indicator + Take Quiz button */}
 					<div className="flex items-center gap-3">
-						<div className="px-4 py-2 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-2 shadow-sm">
-							<div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-							<span className="text-sm font-medium text-green-700">Document Ready</span>
-						</div>
 						
 						<a href="/quiz" className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-2xl shadow-sm hover:bg-blue-700">
 							<span className="text-sm font-semibold">Take Quiz</span>
@@ -242,9 +238,9 @@ export default async function Page({ params }: Params) {
 	}
 
 	return (
-		<div className="h-screen flex flex-col bg-white overflow-hidden">
+		<div className="flex flex-col bg-white min-h-[calc(100vh-64px)]">
 			<SuccessHeaderClient metadata={metadata} fileName={pdf.fileName} />
-			<div className="flex-1 overflow-hidden">
+			<div className="flex-1">
 				<PdfViewerWithChatWrapper pdfChunks={chunks} fileName={pdf.fileName} pdfId={pdf.id} />
 			</div>
 		</div>

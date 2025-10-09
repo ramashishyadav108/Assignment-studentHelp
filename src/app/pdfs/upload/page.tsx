@@ -47,7 +47,7 @@ export default function UploadPDFPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50 py-8 pb-12 min-h-[calc(100vh-120px)]">
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold mb-8">Upload PDF</h1>
 

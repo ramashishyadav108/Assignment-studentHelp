@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-6">
+    <div className="bg-gradient-to-br from-purple-50 via-white to-blue-50 py-4 sm:py-6 pb-8 min-h-[calc(100vh-120px)]">
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 md:py-8 lg:py-12">
         {/* Welcome Header */}
         <div className="mb-4 sm:mb-6 md:mb-8 animate-fadeIn">

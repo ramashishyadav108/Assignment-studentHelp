@@ -97,38 +97,92 @@ export default function QuizResults({ attempt }: Props) {
   const correctAnswers = attempt.answers.filter((a) => a.isCorrect).length;
   const unattemptedCount = attempt.answers.filter((a) => !a.userAnswer || a.userAnswer.trim() === '').length;
 
-  // Get topics from wrong answers for YouTube recommendations
-  const wrongAnswerTopics = attempt.answers
-    .filter((a) => !a.isCorrect)
-    .map((a) => {
-      // Extract topic from question text or use question type
-      const topic = a.question.questionText.split(/[?.]/)[0].trim();
-      return topic.length > 100 ? a.question.type : topic;
-    })
-    .filter((topic, index, self) => self.indexOf(topic) === index) // Remove duplicates
-    .slice(0, 5); // Limit to 5 topics
+  // Get topics from WRONG and UNATTEMPTED answers for YouTube recommendations
+  const wrongAndUnattemptedAnswers = attempt.answers.filter((a) => {
+    const isUnattempted = !a.userAnswer || a.userAnswer.trim() === '';
+    const isWrong = !a.isCorrect && a.userAnswer;
+    return isWrong || isUnattempted;
+  });
 
-  console.log('Wrong answer topics:', wrongAnswerTopics);
+  // Smart topic extraction function
+  const extractTopicFromQuestion = (questionText: string): string => {
+    // Remove question words and punctuation
+    let cleaned = questionText
+      .replace(/^(What|Which|When|Where|Who|Why|How|Is|Are|Was|Were|Do|Does|Did|Can|Could|Will|Would|Should|May|Might|Explain|Describe|Define|Calculate|Find|Determine)\s+/gi, '')
+      .replace(/[?!.]+$/g, '')
+      .trim();
+    
+    // Look for patterns like "...about X" or "...of X"
+    const aboutMatch = cleaned.match(/(?:about|of|regarding|concerning|related to)\s+([^,]+?)(?:\s+(?:is|are|was|were|in|at|and|or)\s+|$)/i);
+    if (aboutMatch && aboutMatch[1]) {
+      const topic = aboutMatch[1].trim().split(/\s+/).slice(0, 5).join(' ');
+      if (topic.length >= 5) return topic;
+    }
+    
+    // Look for "X is/are/was/were" to extract the subject
+    const subjectMatch = cleaned.match(/^([^,]+?)\s+(?:is|are|was|were|does|do|did|has|have|can|could|will|would)\s+/i);
+    if (subjectMatch && subjectMatch[1]) {
+      const topic = subjectMatch[1].trim().split(/\s+/).slice(0, 5).join(' ');
+      if (topic.length >= 5) return topic;
+    }
+    
+    // Extract key terms (remove common stopwords)
+    const stopwords = ['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'with', 'from', 'by', 'this', 'that', 'these', 'those', 'and', 'or', 'but'];
+    const words = cleaned.split(/\s+/)
+      .filter(w => w.length > 3 && !stopwords.includes(w.toLowerCase()))
+      .slice(0, 4);
+    
+    if (words.length >= 2) {
+      return words.join(' ');
+    }
+    
+    // Fallback: first 5 words of cleaned text
+    return cleaned.split(/\s+/).slice(0, 5).join(' ') || 'tutorial';
+  };
+
+  // Extract topics from questions that need help
+  const recommendationTopics = wrongAndUnattemptedAnswers
+    .map((a) => extractTopicFromQuestion(a.question.questionText))
+    .filter((topic) => topic && topic.length >= 5)
+    .filter((topic, index, self) => self.indexOf(topic) === index) // Remove duplicates
+    .slice(0, 6); // Limit to 6 specific topics
+
+  // Add quiz context as backup topics
+  if (recommendationTopics.length < 3) {
+    const contextTopics = [
+      attempt.quiz.title,
+      attempt.quiz.pdf?.title,
+    ]
+      .filter((t): t is string => Boolean(t))
+      .filter(t => !recommendationTopics.includes(t));
+    
+    recommendationTopics.push(...contextTopics.slice(0, 3 - recommendationTopics.length));
+  }
+
+  console.log('📊 Questions needing help:', wrongAndUnattemptedAnswers.length);
+  console.log('🎯 Recommendation topics:', recommendationTopics);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-6">
+    <div className="bg-gray-50 py-6 pb-12 min-h-[calc(100vh-120px)]">
       {/* YouTube Recommendations Floating Button */}
-      {wrongAnswerTopics.length > 0 && !showRecommendations && (
+      {recommendationTopics.length > 0 && !showRecommendations && (
         <button
           onClick={() => setShowRecommendations(true)}
-          className="fixed left-3 sm:left-6 bottom-3 sm:bottom-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group"
-          title="View video recommendations"
+          className="fixed left-3 sm:left-6 bottom-20 sm:bottom-24 md:bottom-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group"
+          title="Get video help for questions you missed or skipped"
         >
           <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor">
             <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
           </svg>
-          <span className="font-medium text-xs sm:text-sm hidden sm:inline">Recommendations</span>
+          <span className="font-medium text-xs sm:text-sm hidden sm:inline">
+            📚 Study Help ({wrongAndUnattemptedAnswers.length})
+          </span>
         </button>
       )}
 
       {/* YouTube Recommender Component */}
       <YouTubeRecommender
-        topics={wrongAnswerTopics}
+        topics={recommendationTopics}
         isOpen={showRecommendations}
         onClose={() => setShowRecommendations(false)}
       />

@@ -11,7 +11,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 relative overflow-hidden">
+    <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 relative overflow-hidden py-8 pb-12 min-h-[calc(100vh-120px)]">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '0s' }}></div>

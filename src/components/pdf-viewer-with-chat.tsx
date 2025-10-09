@@ -279,56 +279,56 @@ export default function PdfViewerWithChat({
           aria-hidden
         />
 
-        <div ref={rightRef} className="transition-all duration-300 p-3 md:p-4 md:w-[55%] lg:w-[60%] md:self-center md:h-[720px]">
+        <div ref={rightRef} className="transition-all duration-300 p-3 md:p-4 h-1/2 md:h-auto md:w-[55%] lg:w-[60%] md:self-center md:h-[720px]">
           <div className="h-full bg-white shadow-2xl rounded-2xl border-2 border-slate-200 overflow-hidden flex flex-col">
             {/* Chat Header (green theme) - Match outer chatbot */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-3 sm:p-4 shadow-lg flex-shrink-0">
-              <div className="flex items-center justify-between gap-2 sm:gap-3">
-                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                  <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg">
-                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-2 sm:p-3 md:p-4 shadow-lg flex-shrink-0">
+              <div className="flex items-center justify-between gap-1.5 sm:gap-2 md:gap-3">
+                <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-1 min-w-0">
+                  <div className="p-1.5 sm:p-2 md:p-2.5 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-lg">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                   </div>
                   <div className="min-w-0">
-                    <h2 className="text-sm sm:text-base font-bold text-white truncate">
+                    <h2 className="text-xs sm:text-sm md:text-base font-bold text-white truncate">
                       PDF Assistant 📄
                     </h2>
-                    <p className="text-xs text-green-100 hidden sm:block truncate">{pdfTopics.join(', ')}</p>
+                    <p className="text-[10px] sm:text-xs text-green-100 hidden sm:block truncate">{pdfTopics.join(', ')}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2">
                   <button
                     onClick={startNewChat}
                     aria-label="New chat"
-                    className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-1.5 text-white text-xs font-semibold"
+                    className="px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 bg-white/20 hover:bg-white/30 rounded-md sm:rounded-lg transition-all duration-200 flex items-center gap-0.5 sm:gap-1 md:gap-1.5 text-white text-[10px] sm:text-xs font-semibold"
                     title="Start new conversation"
                   >
-                    <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5" />
                     <span className="hidden sm:inline">New</span>
                   </button>
                   <button
                     onClick={() => setHistoryOpen(h => !h)}
                     aria-label={historyOpen ? 'Hide history' : 'Show history'}
-                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
+                    className={`p-1 sm:p-1.5 md:p-2 rounded-md sm:rounded-lg transition-all duration-200 ${
                       historyOpen ? 'bg-white/30' : 'bg-white/10 hover:bg-white/20'
                     }`}
                     title={historyOpen ? 'Hide history' : 'Show history'}
                   >
-                    <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                    <List className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-white" />
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
                     aria-label="Close chat"
-                    className="p-1.5 sm:p-2 rounded-lg hover:bg-white/20 transition-all duration-200"
+                    className="p-1 sm:p-1.5 md:p-2 rounded-md sm:rounded-lg hover:bg-white/20 transition-all duration-200"
                     title="Close chat"
                   >
-                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Messages container with custom scrollbar - Match outer chatbot */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5 space-y-2 sm:space-y-3 relative min-h-0 bg-gradient-to-b from-slate-50 to-white">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 lg:p-5 space-y-1.5 sm:space-y-2 md:space-y-3 relative min-h-0 bg-gradient-to-b from-slate-50 to-white">
               {/* Blur overlay for chat area only when history is open */}
               {historyOpen && (
                 <div 
@@ -471,14 +471,14 @@ export default function PdfViewerWithChat({
             </div>
 
             {/* Input area with modern design - Match outer chatbot */}
-            <div className="p-4 bg-gradient-to-r from-slate-50 to-green-50/30 border-t-2 border-slate-200 flex-shrink-0">
-              <div className="flex gap-3">
+            <div className="p-2 sm:p-3 md:p-4 bg-gradient-to-r from-slate-50 to-green-50/30 border-t-2 border-slate-200 flex-shrink-0">
+              <div className="flex gap-2 sm:gap-3">
                 <div className="flex-1 relative">
                   <textarea
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     disabled={loading}
-                    className="w-full px-4 py-3 pr-12 bg-white border-2 border-slate-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 text-sm resize-none shadow-md hover:shadow-lg disabled:opacity-50"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 bg-white border-2 border-slate-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-2 sm:focus:ring-4 focus:ring-green-100 transition-all duration-200 text-xs sm:text-sm resize-none shadow-md hover:shadow-lg disabled:opacity-50"
                     placeholder="💬 Ask about the PDF..."
                     rows={1}
                     onKeyDown={(e) => {
@@ -487,27 +487,27 @@ export default function PdfViewerWithChat({
                         sendQuery();
                       }
                     }}
-                    style={{ minHeight: '48px', maxHeight: '120px' }}
+                    style={{ minHeight: '40px', maxHeight: '100px' }}
                   />
-                  <div className="absolute right-3 bottom-3 text-slate-300">
-                    <MessageSquare className="w-5 h-5" />
+                  <div className="absolute right-2 sm:right-3 bottom-2 sm:bottom-3 text-slate-300">
+                    <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
                 <button 
                   onClick={sendQuery} 
-                  className="px-5 sm:px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 min-w-[60px]" 
+                  className="px-3 sm:px-5 md:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-1 sm:gap-2 min-w-[50px] sm:min-w-[60px]" 
                   disabled={loading || !query.trim()}
                   title="Send message"
                 >
                   {loading ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span className="hidden sm:inline text-sm">Sending...</span>
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span className="hidden sm:inline text-xs sm:text-sm">Sending...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-5 h-5" />
-                      <span className="hidden sm:inline text-sm">Send</span>
+                      <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="hidden sm:inline text-xs sm:text-sm">Send</span>
                     </>
                   )}
                 </button>

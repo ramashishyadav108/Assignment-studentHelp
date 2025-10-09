@@ -12,7 +12,7 @@ export default async function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50 py-8 pb-12 min-h-[calc(100vh-120px)]">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
           <div className="text-center">

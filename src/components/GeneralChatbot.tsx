@@ -126,7 +126,7 @@ export default function GeneralChatbot() {
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="fixed right-3 sm:right-6 bottom-3 sm:bottom-6 z-50 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-2xl flex items-center justify-center hover:shadow-green-500/50 hover:scale-110 transition-all duration-300 group"
+            className="fixed right-3 sm:right-6 bottom-20 sm:bottom-24 md:bottom-6 z-50 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-2xl flex items-center justify-center hover:shadow-green-500/50 hover:scale-110 transition-all duration-300 group"
             title="Open AI Assistant"
           >
             <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform" />
