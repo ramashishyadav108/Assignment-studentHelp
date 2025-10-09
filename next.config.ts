@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Temporarily ignore ESLint during builds so CI/builds don't fail
-  // on library-generated files and other linting issues. Address lint
-  // errors in source files as a follow-up.
+  // Ignore ESLint during builds to prevent failures from library-generated files
   eslint: {
     ignoreDuringBuilds: true,
   },
