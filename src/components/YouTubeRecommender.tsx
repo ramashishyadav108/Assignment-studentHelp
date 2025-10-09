@@ -9,6 +9,8 @@ interface YouTubeVideo {
   thumbnail: string;
   channelTitle: string;
   description: string;
+  viewCount?: number;
+  topic?: string;
 }
 
 interface YouTubeRecommenderProps {
@@ -96,7 +98,7 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
                   Video Recommendations
                 </h3>
                 <p className="text-xs text-gray-600 truncate" style={{ letterSpacing: '0', wordSpacing: 'normal' }}>
-                  {topics.slice(0, 2).join(', ')}{topics.length > 2 ? '...' : ''}
+                  {videos.length > 0 ? `${videos.length} video${videos.length !== 1 ? 's' : ''} for ${topics.length} topic${topics.length !== 1 ? 's' : ''}` : 'Loading...'}
                 </p>
               </div>
             </div>
@@ -183,10 +185,22 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
                         </div>
                       </div>
                       <div className="p-2">
+                        {(video as any).topic && (
+                          <div className="mb-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-[9px] font-semibold inline-block truncate max-w-full">
+                            📌 {(video as any).topic}
+                          </div>
+                        )}
                         <h4 className="font-semibold text-xs line-clamp-2 text-gray-900">
                           {video.title}
                         </h4>
-                        <p className="text-[10px] text-gray-600 truncate mt-1">{video.channelTitle}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-[10px] text-gray-600 truncate">{video.channelTitle}</p>
+                          {video.viewCount && (
+                            <p className="text-[9px] text-green-600 font-semibold">
+                              👁️ {video.viewCount.toLocaleString()}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -207,8 +221,18 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
                             <Youtube className="w-5 h-5 text-white" />
                           </div>
                         </div>
+                        {video.viewCount && (
+                          <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/70 text-white rounded text-[9px] font-semibold">
+                            👁️ {video.viewCount.toLocaleString()}
+                          </div>
+                        )}
                       </div>
                       <div className="p-2">
+                        {(video as any).topic && (
+                          <div className="mb-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-[9px] font-semibold inline-block truncate max-w-full">
+                            📌 {(video as any).topic}
+                          </div>
+                        )}
                         <h4 className="font-semibold text-xs line-clamp-2 text-gray-900">
                           {video.title}
                         </h4>

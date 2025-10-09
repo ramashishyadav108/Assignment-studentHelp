@@ -17,25 +17,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch videos for each topic (up to 8 videos per topic for variety)
+    // Fetch videos for each topic - searchYouTubeVideos already sorts by view count
     const videoPromises = topics.map(async (topic: string) => {
-      const videos = await searchYouTubeVideos(topic, 8);
-      return { topic, videos };
+      const videos = await searchYouTubeVideos(topic, 3); // Get top 3 for each topic
+      return { 
+        topic, 
+        topVideo: videos.length > 0 ? videos[0] : null, // Highest viewed video for this topic
+        allVideos: videos 
+      };
     });
 
     const results = await Promise.all(videoPromises);
 
-    // Flatten all videos into a single array and remove duplicates
-    const allVideos = results.flatMap((r) => r.videos);
-    const uniqueVideos = Array.from(
-      new Map(allVideos.map((v) => [v.id, v])).values()
-    );
+    // Get one top video per topic (highest views)
+    const topVideos = results
+      .filter(r => r.topVideo !== null)
+      .map(r => ({
+        ...r.topVideo!,
+        topic: r.topic // Add topic information to the video
+      }));
 
-    console.log('✅ Total unique videos found:', uniqueVideos.length);
-    console.log('📊 Videos per topic:', results.map(r => `${r.topic}: ${r.videos.length}`));
+    console.log('✅ Top videos found:', topVideos.length, 'for', topics.length, 'topics');
+    console.log('📊 Videos per topic:', results.map(r => 
+      `${r.topic}: ${r.topVideo ? `${r.topVideo.title.slice(0, 50)}... (${r.topVideo.viewCount?.toLocaleString()} views)` : 'No video found'}`
+    ));
 
     return NextResponse.json({
-      videos: uniqueVideos,
+      videos: topVideos, // One video per topic, sorted by view count
       topicResults: results,
     });
   } catch (error) {

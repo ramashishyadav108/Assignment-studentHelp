@@ -61,6 +61,8 @@ export default function PdfViewerWithChat({
   const [pdfTopics, setPdfTopics] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [manualSearchQuery, setManualSearchQuery] = useState('');
+  // Store topics extracted from all pages during PDF parsing
+  const [pageTopics, setPageTopics] = useState<{ [page: number]: string[] }>({});
 
   const dividerRef = useRef<HTMLDivElement | null>(null);
   const leftRef = useRef<HTMLDivElement | null>(null);
@@ -112,61 +114,6 @@ export default function PdfViewerWithChat({
     } finally {
       setLoadingHistory(false);
     }
-  }
-
-  // Extract important keywords from text content
-  function extractKeywords(text: string, maxKeywords: number = 8): string[] {
-    // Common stopwords to filter out
-    const stopwords = new Set([
-      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
-      'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-      'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these',
-      'those', 'it', 'its', 'they', 'their', 'them', 'what', 'which', 'who',
-      'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few',
-      'more', 'most', 'other', 'some', 'such', 'no', 'not', 'only', 'own',
-      'same', 'so', 'than', 'too', 'very', 'just', 'there', 'here', 'then',
-      'now', 'even', 'also', 'well', 'back', 'through', 'page', 'number'
-    ]);
-
-    // Clean and tokenize text
-    const words = text
-      .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
-      .split(/\s+/)
-      .filter(word => {
-        return word.length > 3 && 
-               !stopwords.has(word) && 
-               !/^\d+$/.test(word); // exclude pure numbers
-      });
-
-    // Count word frequency
-    const wordFreq: { [key: string]: number } = {};
-    words.forEach(word => {
-      wordFreq[word] = (wordFreq[word] || 0) + 1;
-    });
-
-    // Sort by frequency and get top keywords
-    const sortedWords = Object.entries(wordFreq)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, maxKeywords)
-      .map(([word]) => word);
-
-    return sortedWords;
-  }
-
-  // Extract keywords from current page content
-  function getCurrentPageKeywords(): string[] {
-    const pageChunks = pdfChunks.filter(chunk => chunk.pageNumber === currentPage);
-    if (pageChunks.length === 0) {
-      console.log('📄 No chunks found for page', currentPage);
-      return [];
-    }
-
-    const pageContent = pageChunks.map(chunk => chunk.content).join(' ');
-    const keywords = extractKeywords(pageContent, 8);
-    console.log('🔍 Page', currentPage, 'keywords:', keywords);
-    return keywords;
   }
 
   const startDrag = (e: React.MouseEvent) => {
@@ -252,11 +199,23 @@ export default function PdfViewerWithChat({
   const pdfUrl = `/api/pdfs/file/${encodeURIComponent(fileName)}`;
 
   // Handler for showing recommendations based on current page
+  // Extracts important points from page and recommends one video per point
   const handleShowRecommendations = () => {
-    const pageKeywords = getCurrentPageKeywords();
-    if (pageKeywords.length > 0) {
-      setPdfTopics(pageKeywords);
+    console.log('🎬 Starting recommendations for page', currentPage);
+    
+    // Use pre-extracted topics from PDF parsing
+    const topics = pageTopics[currentPage] || [];
+    
+    if (topics.length === 0) {
+      console.log('⚠️ No topics found for page', currentPage);
+      alert(`No topics available for page ${currentPage}. Topics are extracted when the PDF is loaded.`);
+      return;
     }
+
+    console.log('🔑 Using', topics.length, 'pre-extracted topics:', topics);
+    
+    // Set topics - each will get one video recommendation (highest views)
+    setPdfTopics(topics);
     setShowRecommendations(true);
   };
 
@@ -307,6 +266,10 @@ export default function PdfViewerWithChat({
             pdfUrl={pdfUrl} 
             fileName={fileName}
             onPageChange={(page) => setCurrentPage(page)}
+            onTopicsExtracted={(topics) => {
+              console.log('📚 Received topics from PDF parsing:', Object.keys(topics).length, 'pages');
+              setPageTopics(topics);
+            }}
           />
           
           {/* YouTube Recommendations Button - Inside PDF Box, positioned at bottom with spacing */}
@@ -335,13 +298,16 @@ export default function PdfViewerWithChat({
               {/* Recommendations Button - Shows above search */}
               <button
                 onClick={handleShowRecommendations}
-                className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm"
-                title="View video recommendations for current page"
+                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm font-semibold"
+                title="Get video recommendations for topics on this page"
               >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
-                <span className="font-medium">Page {currentPage}</span>
+                <div className="flex flex-col items-start">
+                  <span className="text-[10px] sm:text-xs opacity-90">Recommend for</span>
+                  <span className="font-bold">Page {currentPage}</span>
+                </div>
               </button>
             </div>
           )}

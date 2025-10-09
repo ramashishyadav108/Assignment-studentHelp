@@ -8,6 +8,7 @@ interface PDFViewerProps {
   pdfUrl: string;
   fileName: string;
   onPageChange?: (page: number) => void;
+  onTopicsExtracted?: (pageTopics: { [page: number]: string[] }) => void;
 }
 
 interface OutlineItem {
@@ -73,7 +74,7 @@ function PageInput({ currentPage, numPages, onGoTo }: { currentPage: number; num
   );
 }
 
-export default function PDFViewer({ pdfUrl, fileName, onPageChange }: PDFViewerProps) {
+export default function PDFViewer({ pdfUrl, fileName, onPageChange, onTopicsExtracted }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   // Mobile: 55% zoom (0.55), Desktop: 115% zoom (1.15)
   const [scale, setScale] = useState<number>(
@@ -135,6 +136,47 @@ export default function PDFViewer({ pdfUrl, fileName, onPageChange }: PDFViewerP
     }
   }, [currentPage, onPageChange]);
 
+  // Extract keywords from text using frequency analysis
+  function extractKeywords(text: string, maxKeywords: number = 7): string[] {
+    // Common stopwords to filter out
+    const stopwords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+      'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+      'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these',
+      'those', 'it', 'its', 'they', 'their', 'them', 'what', 'which', 'who',
+      'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few',
+      'more', 'most', 'other', 'some', 'such', 'no', 'not', 'only', 'own',
+      'same', 'so', 'than', 'too', 'very', 'just', 'there', 'here', 'then',
+      'now', 'even', 'also', 'well', 'back', 'through', 'page', 'number'
+    ]);
+
+    // Clean and tokenize text
+    const words = text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(word => {
+        return word.length > 3 && 
+               !stopwords.has(word) && 
+               !/^\d+$/.test(word); // exclude pure numbers
+      });
+
+    // Count word frequency
+    const wordFreq: { [key: string]: number } = {};
+    words.forEach(word => {
+      wordFreq[word] = (wordFreq[word] || 0) + 1;
+    });
+
+    // Sort by frequency and get top keywords
+    const sortedWords = Object.entries(wordFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, maxKeywords)
+      .map(([word]) => word);
+
+    return sortedWords;
+  }
+
   async function onDocumentLoadSuccess({ numPages }: any) {
     setNumPages(numPages);
 
@@ -179,6 +221,38 @@ export default function PDFViewer({ pdfUrl, fileName, onPageChange }: PDFViewerP
 
         const processedOutline = await processOutline(pdfOutline);
         setOutline(processedOutline);
+      }
+
+      // Extract topics from all pages for YouTube recommendations
+      if (onTopicsExtracted) {
+        console.log('Starting topic extraction from all pages...');
+        const pageTopicsMap: { [page: number]: string[] } = {};
+
+        // Extract text and keywords from each page
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+          try {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items
+              .map((item: any) => item.str)
+              .join(' ');
+
+            // Extract keywords from page text
+            const keywords = extractKeywords(pageText, 7);
+            pageTopicsMap[pageNum] = keywords;
+
+            // Log progress for large PDFs
+            if (pageNum % 10 === 0) {
+              console.log(`Extracted topics from ${pageNum}/${numPages} pages`);
+            }
+          } catch (error) {
+            console.error(`Error extracting topics from page ${pageNum}:`, error);
+            pageTopicsMap[pageNum] = []; // Empty array on error
+          }
+        }
+
+        console.log('Topic extraction complete. Extracted topics for', numPages, 'pages');
+        onTopicsExtracted(pageTopicsMap);
       }
     } catch (error) {
       console.error('Error loading PDF outline:', error);
