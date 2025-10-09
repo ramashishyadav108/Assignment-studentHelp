@@ -54,7 +54,11 @@ export default function PdfPageClient({
         const sentences = chunk.content.split(/[.!?]\s+/);
         sentences.slice(0, 2).forEach(sentence => {
           if (sentence.length > 10 && sentence.length < 100) {
-            topics.push(sentence.trim());
+            // Normalize text: remove extra spaces and weird characters
+            const normalized = sentence.trim().replace(/\s+/g, ' ').replace(/[^\w\s\-,]/g, '');
+            if (normalized.length > 10) {
+              topics.push(normalized);
+            }
           }
         });
       });

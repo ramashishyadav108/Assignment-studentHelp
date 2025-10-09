@@ -19,12 +19,15 @@ export default function RootLayout({
 
   // Don't show general chatbot on PDF viewer pages
   const isPdfViewerPage = pathname?.startsWith('/pdfs/') && pathname !== '/pdfs' && pathname !== '/pdfs/upload';
+  
+  // Don't show header on landing page (it has its own nav)
+  const isLandingPage = pathname === '/';
 
   return (
     <ClerkProvider>
       <html lang="en">
         <body className={`${inter.className} flex flex-col min-h-screen`}>
-          <Header />
+          {!isLandingPage && <Header />}
           <main className="flex-1">
             {children}
           </main>

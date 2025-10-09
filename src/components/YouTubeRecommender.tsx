@@ -75,10 +75,10 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
                 <Youtube className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <h3 className="text-base font-bold text-purple-600" style={{ letterSpacing: '0', wordSpacing: 'normal' }}>
                   Video Recommendations
                 </h3>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-gray-600" style={{ letterSpacing: '0', wordSpacing: 'normal' }}>
                   {topics.slice(0, 2).join(', ')}{topics.length > 2 ? '...' : ''}
                 </p>
               </div>

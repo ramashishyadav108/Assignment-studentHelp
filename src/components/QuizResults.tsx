@@ -99,7 +99,7 @@ export default function QuizResults({ attempt }: Props) {
 
   // Get topics from wrong answers for YouTube recommendations
   const wrongAnswerTopics = attempt.answers
-    .filter((a) => !a.isCorrect && a.userAnswer && a.userAnswer.trim() !== '')
+    .filter((a) => !a.isCorrect)
     .map((a) => {
       // Extract topic from question text or use question type
       const topic = a.question.questionText.split(/[?.]/)[0].trim();
@@ -107,6 +107,8 @@ export default function QuizResults({ attempt }: Props) {
     })
     .filter((topic, index, self) => self.indexOf(topic) === index) // Remove duplicates
     .slice(0, 5); // Limit to 5 topics
+
+  console.log('Wrong answer topics:', wrongAnswerTopics);
 
   return (
     <div className="min-h-screen bg-gray-50">
