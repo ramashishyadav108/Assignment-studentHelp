@@ -367,9 +367,7 @@ export default function GeneralChatbot() {
                 )}
               </button>
             </div>
-            <p className="text-xs text-slate-500 mt-2 text-center font-medium">
-              💡 Press <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-xs">Enter</kbd> to send • <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-xs">Shift+Enter</kbd> for new line
-            </p>
+
           </div>
         </div>
       )}
