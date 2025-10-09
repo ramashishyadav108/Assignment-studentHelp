@@ -2,10 +2,26 @@
 
 import React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, List, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+
+// Dynamically import react-pdf to avoid SSR issues
+let Document: any;
+let Page: any;
+let pdfjs: any;
+
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const reactPdf = require('react-pdf');
+  Document = reactPdf.Document;
+  Page = reactPdf.Page;
+  pdfjs = reactPdf.pdfjs;
+
+  // Import CSS only on client side
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('react-pdf/dist/Page/AnnotationLayer.css');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('react-pdf/dist/Page/TextLayer.css');
+}
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -258,6 +274,18 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
       </div>
     );
   };
+
+  // Don't render if react-pdf is not loaded (SSR protection)
+  if (!Document || !Page) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-600 text-sm">Initializing PDF viewer...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full">
