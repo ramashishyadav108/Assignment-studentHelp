@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 import { BookOpen, Upload, FileText } from 'lucide-react';
 import { formatDate, formatFileSize } from '@/lib/utils';
+import PDFListClient from '@/components/PDFListClient';
 
 export default async function PDFsPage() {
   const { userId } = await auth();
@@ -29,15 +30,15 @@ export default async function PDFsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-12">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 md:mb-12 animate-fadeIn">
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 md:mb-8 animate-fadeIn">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-1 sm:mb-2">
               My PDFs
             </h1>
-            <p className="text-sm md:text-base text-gray-600">
+            <p className="text-xs sm:text-sm md:text-base text-gray-600">
               {user?.pdfs && user.pdfs.length > 0 
                 ? `${user.pdfs.length} coursebook${user.pdfs.length !== 1 ? 's' : ''} in your library` 
                 : 'Your digital library awaits'}
@@ -45,73 +46,15 @@ export default async function PDFsPage() {
           </div>
           <Link
             href="/pdfs/upload"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 md:px-8 py-3 md:py-3.5 bg-gradient-primary text-white rounded-xl hover:shadow-2xl font-semibold transition-all duration-300 hover:scale-105 transform btn-modern"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-3.5 bg-gradient-primary text-white rounded-lg sm:rounded-xl hover:shadow-2xl text-sm sm:text-base font-semibold transition-all duration-300 hover:scale-105 transform btn-modern flex-shrink-0"
           >
-            <Upload className="h-5 w-5" />
+            <Upload className="h-4 w-4 sm:h-5 sm:w-5" />
             Upload PDF
           </Link>
         </div>
 
         {user?.pdfs && user.pdfs.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {user.pdfs.map((pdf, index) => (
-              <Link
-                key={pdf.id}
-                href={`/pdfs/${pdf.id}`}
-                style={{ animationDelay: `${index * 50}ms` }}
-                className="group bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-2xl transition-all duration-300 overflow-hidden card-hover animate-fadeInUp"
-              >
-                {/* Decorative gradient background */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100/50 to-blue-100/50 rounded-full -mr-16 -mt-16 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                <div className="relative z-10">
-                  {/* Icon & Badge */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-md">
-                      <FileText className="h-7 w-7 text-purple-600" />
-                    </div>
-                    {pdf.subject && (
-                      <span className="inline-block px-3 py-1 bg-gradient-primary text-white text-xs font-semibold rounded-full shadow-md">
-                        {pdf.subject}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-bold text-lg text-gray-900 mb-3 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                    {pdf.title}
-                  </h3>
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 mb-4 text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                      <span className="text-gray-600 font-medium">{pdf.totalPages} pages</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                      <span className="text-gray-600 font-medium">{formatFileSize(pdf.fileSize)}</span>
-                    </div>
-                  </div>
-
-                  {/* Date */}
-                  <div className="pt-4 border-t border-gray-100">
-                    <p className="text-xs text-gray-500">
-                      📅 Uploaded {formatDate(pdf.uploadedAt)}
-                    </p>
-                  </div>
-
-                  {/* Hover effect indicator */}
-                  <div className="mt-4 flex items-center gap-2 text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-sm font-semibold">View PDF</span>
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <PDFListClient pdfs={user.pdfs as any} />
         ) : (
           <div className="text-center py-16 md:py-24 bg-white/70 backdrop-blur-sm rounded-3xl border-2 border-dashed border-purple-200 animate-fadeIn">
             <div className="relative inline-block mb-6">

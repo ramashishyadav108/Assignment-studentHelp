@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageSquare, Sparkles, X, List } from 'lucide-react';
 import YouTubeRecommender from './YouTubeRecommender';
+import TypingDots from './ui/TypingDots';
 import dynamic from 'next/dynamic';
 
 // Dynamic import to prevent SSR issues with PDF.js and DOMMatrix
@@ -42,7 +43,8 @@ export default function PdfViewerWithChat({
   pdfId?: string;
 }) {
   // Chat open state: when false show compact bubble, when true show split screen
-  const [isOpen, setIsOpen] = useState(false);
+  // Default to open (page should show PDF left + chat right immediately)
+  const [isOpen, setIsOpen] = useState(true);
   // Sidebar for previous chats inside the chat panel
   const [historyOpen, setHistoryOpen] = useState(true);
   // Sessions: loaded from database
@@ -88,10 +90,14 @@ export default function PdfViewerWithChat({
     }
   }, [pdfChunks, fileName]);
 
-  // Load chat history when component opens
+  // Load chat history when component opens. We load history to populate the sidebar
+  // but we intentionally DO NOT auto-open the most recent chat — we want a new chat
+  // to be the default when the panel opens.
   useEffect(() => {
     if (isOpen && chats.length === 0 && !loadingHistory) {
       loadChatHistory();
+      // Also start a fresh chat session by default
+      startNewChat();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -117,14 +123,9 @@ export default function PdfViewerWithChat({
           : data.chats;
         
         console.log('Filtered PDF chats:', pdfChats);
+        // Set the list of chats in the history sidebar but DO NOT auto-select any chat.
+        // The UI will default to a new chat session when the panel opens.
         setChats(pdfChats);
-        
-        // If there are existing chats, load the most recent one
-        if (pdfChats.length > 0) {
-          const mostRecent = pdfChats[0];
-          setActiveChatId(mostRecent.id);
-          setMessages(mostRecent.messages);
-        }
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
@@ -162,6 +163,9 @@ export default function PdfViewerWithChat({
     setMessages((m) => [...m, { role: 'user', text: q }]);
     setQuery('');
     setLoading(true);
+    // Insert an inline placeholder assistant message so UI shows processing inside the chat
+    let placeholderId = `ph-${Date.now()}`;
+    setMessages((m) => [...m, { id: placeholderId, role: 'assistant', text: 'Processing...' }]);
 
     try {
       // Call chat API endpoint that saves to database
@@ -179,14 +183,9 @@ export default function PdfViewerWithChat({
       
       if (data.success) {
         const answerText = data.message?.content || 'Sorry — I could not process your request.';
-        
-        // Update messages with the assistant's response
-        setMessages((m) => [...m, { 
-          id: data.message?.id,
-          role: 'assistant', 
-          text: answerText,
-          createdAt: data.message?.createdAt
-        }]);
+
+        // Replace placeholder with real assistant response
+        setMessages((m) => m.map(msg => msg.id === placeholderId ? { id: data.message?.id, role: 'assistant', text: answerText, createdAt: data.message?.createdAt } : msg));
 
         // Update or create chat session
         if (!activeChatId && data.chatId) {
@@ -195,11 +194,11 @@ export default function PdfViewerWithChat({
           setTimeout(() => loadChatHistory(), 500);
         }
       } else {
-        setMessages((m) => [...m, { role: 'assistant', text: 'Sorry — I could not process your request.' }]);
+        setMessages((m) => m.map(msg => msg.id === placeholderId ? { id: undefined, role: 'assistant', text: 'Sorry — I could not process your request.' } : msg));
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages((m) => [...m, { role: 'assistant', text: 'Sorry, there was an error processing your request.' }]);
+      setMessages((m) => m.map(msg => msg.id === placeholderId ? { id: undefined, role: 'assistant', text: 'Sorry, there was an error processing your request.' } : msg));
     }
 
     setLoading(false);
@@ -218,15 +217,16 @@ export default function PdfViewerWithChat({
   const pdfUrl = `/api/pdfs/file/${encodeURIComponent(fileName)}`;
 
   return (
-    <div className="relative h-screen bg-white">
+    <div className="relative h-[calc(100vh-80px)] bg-white">
+        
         {/* YouTube Recommendations Floating Button */}
         {pdfTopics.length > 0 && !showRecommendations && (
           <button
             onClick={() => setShowRecommendations(true)}
-            className="fixed left-6 bottom-6 z-40 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group"
+            className="fixed left-2 sm:left-6 bottom-20 sm:bottom-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group text-xs sm:text-base"
             title="View video recommendations"
           >
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="w-4 h-4 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor">
               <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
             </svg>
             <span className="font-medium hidden sm:inline">Recommendations</span>
@@ -244,146 +244,169 @@ export default function PdfViewerWithChat({
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="fixed right-6 bottom-6 z-50 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
+            className="fixed right-2 sm:right-6 bottom-20 sm:bottom-6 z-50 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
             title="Open Assistant"
           >
-            <MessageSquare className="w-6 h-6" />
+            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         )}
 
-  <div className={`flex h-full`}> 
-        {/* PDF Viewer pane */}
-        <div ref={leftRef} className={`overflow-hidden ${isOpen ? 'w-1/2' : 'w-full'} transition-all duration-300`}>
-          <PDFViewer pdfUrl={pdfUrl} fileName={fileName} />
+  {/* Mobile: Stack vertically (55% PDF, 45% Chat), Desktop: Side by side */}
+  <div className={`flex ${isOpen ? 'flex-col md:flex-row md:items-center' : 'flex-col'} h-full`}> 
+    {/* PDF Viewer pane (boxed) */}
+    <div ref={leftRef} className={`transition-all duration-300 p-3 md:p-4 ${isOpen ? 'h-1/2 md:h-full md:w-1/2' : 'w-full h-full'}`}>
+      <div className="h-full bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
+        {/* Header for PDF box */}
+        <div className="flex items-center justify-between px-3 py-2 border-b">
+          <div className="text-sm font-medium truncate">{fileName}</div>
+          <a href={pdfUrl} download={fileName} className="px-2 py-1 bg-blue-600 text-white rounded text-xs">Download</a>
         </div>
 
-        {/* Chat panel + divider when open */}
-        {isOpen && (
-          <>
-            <div
-              ref={dividerRef}
-              onMouseDown={startDrag}
-              className="w-1 bg-gradient-to-b from-blue-300 via-indigo-300 to-purple-300 cursor-col-resize hover:w-1.5 transition-all duration-200 relative group"
-              aria-hidden
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-blue-400 via-indigo-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+        {/* Scrollable PDF content */}
+        <div className="flex-1 overflow-auto">
+          <PDFViewer pdfUrl={pdfUrl} fileName={fileName} />
+        </div>
+      </div>
+    </div>
+
+    {/* Chat panel + divider when open (boxed) */}
+    {isOpen && (
+      <>
+        <div
+          ref={dividerRef}
+          onMouseDown={startDrag}
+          className="hidden md:block w-1 bg-transparent cursor-col-resize"
+          aria-hidden
+        />
+
+        <div ref={rightRef} className="transition-all duration-300 p-3 md:p-4 md:w-[55%] lg:w-[60%] md:self-center md:h-[720px]">
+          <div className="h-full bg-white shadow-2xl rounded-2xl border-2 border-slate-200 overflow-hidden flex flex-col">
+            {/* Chat Header (green theme) - Match outer chatbot */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-3 sm:p-4 shadow-lg flex-shrink-0">
+              <div className="flex items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-sm sm:text-base font-bold text-white truncate">
+                      PDF Assistant 📄
+                    </h2>
+                    <p className="text-xs text-green-100 hidden sm:block truncate">{pdfTopics.join(', ')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <button
+                    onClick={startNewChat}
+                    aria-label="New chat"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-1.5 text-white text-xs font-semibold"
+                    title="Start new conversation"
+                  >
+                    <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span className="hidden sm:inline">New</span>
+                  </button>
+                  <button
+                    onClick={() => setHistoryOpen(h => !h)}
+                    aria-label={historyOpen ? 'Hide history' : 'Show history'}
+                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
+                      historyOpen ? 'bg-white/30' : 'bg-white/10 hover:bg-white/20'
+                    }`}
+                    title={historyOpen ? 'Hide history' : 'Show history'}
+                  >
+                    <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  </button>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    aria-label="Close chat"
+                    className="p-1.5 sm:p-2 rounded-lg hover:bg-white/20 transition-all duration-200"
+                    title="Close chat"
+                  >
+                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div ref={rightRef} className="w-1/2 backdrop-blur-xl bg-white/70 relative overflow-hidden" style={{ height: '100vh' }}>
-              {/* Blur overlay when history is open - only covers chat area */}
+            {/* Messages container with custom scrollbar - Match outer chatbot */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5 space-y-2 sm:space-y-3 relative min-h-0 bg-gradient-to-b from-slate-50 to-white">
+              {/* Blur overlay for chat area only when history is open */}
               {historyOpen && (
                 <div 
-                  className="absolute inset-0 bg-black/30 backdrop-blur-sm z-40"
+                  className="absolute inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300"
                   onClick={() => setHistoryOpen(false)}
-                  aria-hidden="true"
                 />
               )}
-
-              {/* Fixed Header */}
-              <div className="absolute top-0 left-0 right-0 backdrop-blur-xl bg-gradient-to-r from-white via-indigo-50/30 to-purple-50/30 border-b-2 border-indigo-200/50 p-3 shadow-lg z-50">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-lg">
-                      <Sparkles className="w-4 h-4 text-white" />
+              
+              {/* Left history slider inside chat panel */}
+              <div className={`absolute left-0 top-0 bottom-0 w-64 sm:w-72 lg:w-80 bg-white/95 backdrop-blur-xl border-r-2 border-slate-200 shadow-2xl overflow-y-auto transition-all duration-300 z-50 ${historyOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="sticky top-0 bg-gradient-to-r from-green-50 to-emerald-50 backdrop-blur-sm z-10 p-4 border-b-2 border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <List className="w-4 h-4 text-green-600" />
+                      <h4 className="font-bold text-sm text-slate-800">Chat History</h4>
                     </div>
-                    <h2 className="text-base font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                      PDF Assistant
-                    </h2>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
                     <button
-                      onClick={startNewChat}
-                      className="px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors duration-200 border border-indigo-200/50"
-                      title="Start new chat"
-                    >
-                      New Chat
-                    </button>
-                    
-                    <button
-                      onClick={() => setHistoryOpen(h => !h)}
-                      aria-label={historyOpen ? 'Hide history' : 'Show history'}
-                      className="p-2 rounded-lg hover:bg-slate-100 transition-colors duration-200"
-                      title={historyOpen ? 'Hide history' : 'Show history'}
-                    >
-                      <List className="w-4 h-4 text-slate-600" />
-                    </button>
-
-                    <button
-                      onClick={() => setIsOpen(false)}
-                      aria-label="Close chat"
-                      className="p-2 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
-                      title="Close chat"
+                      onClick={() => setHistoryOpen(false)}
+                      className="p-1.5 rounded-lg hover:bg-green-100 transition-colors"
+                      title="Close history"
                     >
                       <X className="w-4 h-4 text-slate-600" />
                     </button>
                   </div>
                 </div>
-              </div>
-
-              {/* History sidebar with frosted glass effect */}
-              <div className={`absolute left-0 bottom-0 w-80 bg-white/95 backdrop-blur-xl border-r-2 border-indigo-200/50 shadow-2xl overflow-y-auto transition-transform duration-300 ease-out z-50 ${historyOpen ? 'translate-x-0' : '-translate-x-80'}`} style={{ top: '60px' }}>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-indigo-100">
-                    <h4 className="font-bold text-base bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">PDF Chats</h4>
-                    <button
-                      onClick={() => setHistoryOpen(false)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors"
-                      title="Close history"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+                <div className="p-3">
                   {loadingHistory ? (
-                    <div className="text-center py-8">
-                      <div className="inline-block w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                      <p className="text-sm text-slate-500 mt-3">Loading history...</p>
+                    <div className="text-center py-8 text-sm text-slate-500">
+                      <div className="animate-spin w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                      <p className="font-medium">Loading chats...</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {chats.map((chat) => {
-                        const isActive = activeChatId === chat.id;
-                        return (
-                          <button
-                            key={chat.id}
-                            onClick={() => {
-                              loadChat(chat);
-                              setHistoryOpen(false);
-                            }}
-                            className={`w-full text-left p-3 rounded-xl border-2 transition-all duration-200 group relative ${
-                              isActive
-                                ? 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-300 shadow-md'
-                                : 'bg-white border-slate-200 hover:border-indigo-200 hover:shadow-lg'
-                            }`}
-                          >
-                            {isActive && (
-                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-r-full"></div>
-                            )}
-                            <div className="flex items-start gap-2">
-                              <MessageSquare className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'}`} />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold truncate text-slate-800">{chat.title}</div>
-                                <div className="text-xs text-slate-500 truncate mt-1">
-                                  {chat.messages.length > 0 
-                                    ? chat.messages[chat.messages.length - 1].text.slice(0, 60) + '...'
-                                    : 'No messages'}
-                                </div>
-                                <div className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
-                                  <span>📅</span>
-                                  {new Date(chat.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </div>
+                      {chats.map((chat) => (
+                        <button 
+                          key={chat.id} 
+                          onClick={() => {
+                            loadChat(chat);
+                            setHistoryOpen(false);
+                          }} 
+                          className={`w-full text-left p-3 rounded-xl border-2 transition-all hover:shadow-lg ${
+                            activeChatId === chat.id 
+                              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400 shadow-md' 
+                              : 'bg-white border-slate-200 hover:border-green-300 hover:bg-green-50/30'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-bold truncate text-slate-800 mb-1">{chat.title}</div>
+                              <div className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                                {chat.messages.length > 0 
+                                  ? chat.messages[chat.messages.length - 1].text.slice(0, 60) + (chat.messages[chat.messages.length - 1].text.length > 60 ? '...' : '')
+                                  : 'No messages'}
                               </div>
                             </div>
-                          </button>
-                        );
-                      })}
-                      {chats.length === 0 && (
-                        <div className="text-center py-12">
-                          <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center">
-                            <MessageSquare className="w-8 h-8 text-slate-400" />
+                            {activeChatId === chat.id && (
+                              <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            )}
                           </div>
-                          <p className="text-sm font-medium text-slate-600">No chat history yet</p>
-                          <p className="text-xs text-slate-400 mt-1">Start a conversation to see it here</p>
+                          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
+                            <div className="text-xs font-medium text-slate-400">
+                              📅 {new Date(chat.updatedAt).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-slate-300">•</div>
+                            <div className="text-xs font-medium text-green-600">
+                              {chat.messages.length} msg{chat.messages.length !== 1 ? 's' : ''}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                      {chats.length === 0 && (
+                        <div className="text-center py-12 px-4 text-sm text-slate-400">
+                          <div className="relative inline-block mb-4">
+                            <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full blur-xl opacity-20"></div>
+                            <MessageSquare className="w-14 h-14 mx-auto text-slate-300 relative" />
+                          </div>
+                          <p className="font-semibold text-slate-600 mb-1">No conversations yet</p>
+                          <p className="text-xs">Start chatting to build your history! 💬</p>
                         </div>
                       )}
                     </div>
@@ -391,104 +414,113 @@ export default function PdfViewerWithChat({
                 </div>
               </div>
 
-              {/* Scrollable Messages Area */}
-              <div className="absolute top-0 left-0 right-0 bottom-0 overflow-y-auto" style={{ paddingTop: '64px', paddingBottom: '100px' }}>
-                <div className="p-4 space-y-3">
-
-                {messages.length === 0 && (
-                  <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
-                    <div className="text-center space-y-4 animate-fadeIn">
-                      <div className="relative inline-block">
-                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full blur-2xl opacity-30 animate-pulse"></div>
-                        <div className="relative w-20 h-20 mx-auto bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center shadow-xl">
-                          <Sparkles className="w-10 h-10 text-indigo-600" />
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-slate-800 mb-1">Welcome to PDF Assistant! 👋</h3>
-                        <p className="text-sm text-slate-500">Ask questions about your PDF document</p>
+              {messages.length === 0 && (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center space-y-4 animate-fadeIn px-4">
+                    <div className="relative inline-block">
+                      <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full blur-2xl opacity-30 animate-pulse"></div>
+                      <div className="relative bg-gradient-to-br from-green-100 to-emerald-100 p-6 rounded-full">
+                        <MessageSquare className="w-16 h-16 text-green-600" />
                       </div>
                     </div>
+                    <div>
+                      <p className="text-slate-700 font-semibold text-lg mb-2">👋 Hello! I'm your PDF Assistant</p>
+                      <p className="text-slate-500 text-sm max-w-sm mx-auto">Ask me anything about this PDF - I'm here to help you learn and understand! ✨</p>
+                    </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {messages.map((m, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-slideIn`}
-                    style={{ animation: `slideIn${m.role === 'user' ? 'Right' : 'Left'} 0.4s ease-out` }}
-                  >
-                    <div className={`max-w-[85%] p-3.5 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-200 ${
+              {messages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-slideIn`}
+                >
+                  <div className={`max-w-[85%] sm:max-w-[75%] ${
+                    m.role === 'user' 
+                      ? 'ml-auto' 
+                      : 'mr-auto'
+                  }`}>
+                    <div className={`p-3 sm:p-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 ${
                       m.role === 'user' 
-                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-md' 
-                        : 'bg-white text-slate-800 rounded-bl-md border-2 border-slate-100'
+                        ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-br-sm' 
+                        : 'bg-white text-slate-800 rounded-bl-sm border-2 border-slate-100'
                     }`}>
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.text}</p>
-                    </div>
-                  </div>
-                ))}
-
-                {loading && (
-                  <div className="flex justify-start animate-slideInLeft">
-                    <div className="bg-white p-4 rounded-2xl rounded-bl-md shadow-lg border-2 border-slate-100">
-                      <div className="flex gap-1.5">
-                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
-                        <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
-                </div>
-              </div>
-
-              {/* Fixed Input Area at Bottom */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-indigo-50/50 via-purple-50/30 to-pink-50/50 backdrop-blur-xl border-t-2 border-indigo-200/50 shadow-2xl z-20">
-                <div className="p-4">
-                  <div className="flex gap-3 items-end">
-                    <div className="flex-1 relative">
-                      <input
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        className="w-full px-4 py-3 pr-12 bg-white border-2 border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 text-sm shadow-lg placeholder:text-slate-400"
-                        placeholder="Ask about this PDF..."
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !loading) sendQuery();
-                        }}
-                      />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        <MessageSquare className="w-4 h-4" />
-                      </div>
-                      <div className="absolute -top-7 right-2 text-xs text-slate-400">
-                        Press <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded shadow-sm font-mono">Enter</kbd> to send
-                      </div>
-                    </div>
-                    <button 
-                      onClick={sendQuery} 
-                      className="px-5 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2" 
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span className="hidden sm:inline text-sm">Thinking...</span>
-                        </>
+                      {/* Typing placeholder support */}
+                      {((m.id && String(m.id).startsWith('ph-')) || m.text === 'Processing...') ? (
+                        <div className="flex gap-1.5">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
                       ) : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          <span className="hidden sm:inline text-sm">Send</span>
-                        </>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{m.text}</p>
                       )}
-                    </button>
+                      {m.createdAt && (
+                        <p className={`text-xs mt-2 flex items-center gap-1 ${m.role === 'user' ? 'text-green-100' : 'text-slate-400'}`}>
+                          <span>🕐</span>
+                          {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
+
+              <div ref={messagesEndRef} />
             </div>
-          </>
-        )}
-      </div>
+
+            {/* Input area with modern design - Match outer chatbot */}
+            <div className="p-4 bg-gradient-to-r from-slate-50 to-green-50/30 border-t-2 border-slate-200 flex-shrink-0">
+              <div className="flex gap-3">
+                <div className="flex-1 relative">
+                  <textarea
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    disabled={loading}
+                    className="w-full px-4 py-3 pr-12 bg-white border-2 border-slate-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 text-sm resize-none shadow-md hover:shadow-lg disabled:opacity-50"
+                    placeholder="💬 Ask about the PDF..."
+                    rows={1}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey && !loading) {
+                        e.preventDefault();
+                        sendQuery();
+                      }
+                    }}
+                    style={{ minHeight: '48px', maxHeight: '120px' }}
+                  />
+                  <div className="absolute right-3 bottom-3 text-slate-300">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                </div>
+                <button 
+                  onClick={sendQuery} 
+                  className="px-5 sm:px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 min-w-[60px]" 
+                  disabled={loading || !query.trim()}
+                  title="Send message"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span className="hidden sm:inline text-sm">Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      <span className="hidden sm:inline text-sm">Send</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-2 text-center font-medium">
+                💡 Press <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-xs">Enter</kbd> to send • <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-xs">Shift+Enter</kbd> for new line
+              </p>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
 
       <style jsx>{`
         @keyframes fadeIn {

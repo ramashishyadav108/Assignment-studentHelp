@@ -37,14 +37,45 @@ async function safeGenerateContent(prompt: string, candidates?: string[]) {
       if (totalTokens > 1048576) {
         throw new Error(`Prompt exceeds token limit of 1,048,576 (got ${totalTokens})`);
       }
-      const result = await model.generateContent(prompt);
 
-      // Validate that we got a response
-      if (!result || !result.response) {
-        throw new Error('Empty response from model');
+      // Try with retries on transient errors (e.g., 429, 503, overloaded)
+      const maxAttempts = 500;
+      let attempt = 0;
+      while (attempt < maxAttempts) {
+        try {
+          attempt += 1;
+          const result = await model.generateContent(prompt);
+
+          // Validate that we got a response
+          if (!result || !result.response) {
+            throw new Error('Empty response from model');
+          }
+
+          return result;
+        } catch (innerErr: any) {
+          // If this is a transient error, backoff and retry; otherwise break to try next model
+          const status = innerErr?.status;
+          const msg = (innerErr?.message || '').toLowerCase();
+          const isTransient = status === 429 || status === 503 || msg.includes('overloaded') || msg.includes('temporarily');
+
+          console.error(`Attempt ${attempt} for model ${modelName} failed:`, { message: innerErr?.message, status });
+
+          if (!isTransient) {
+            // Non-transient error: stop retrying this model and move to next
+            throw innerErr;
+          }
+
+          if (attempt >= maxAttempts) {
+            // Exhausted retries for this model
+            throw innerErr;
+          }
+
+          // Exponential backoff before next attempt
+          const backoffMs = 500 * Math.pow(2, attempt - 1); // 500ms, 1000ms, 2000ms
+          await new Promise((res) => setTimeout(res, backoffMs));
+          continue;
+        }
       }
-
-      return result;
     } catch (err: any) {
       lastErr = err;
       console.error(`Model ${modelName} failed:`, {

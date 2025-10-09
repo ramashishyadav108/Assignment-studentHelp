@@ -119,7 +119,7 @@ function SuccessHeaderClient({ metadata, fileName }: { metadata: any; fileName: 
 					</div>
 					
 					{/* Status indicator + Take Quiz button */}
-					<div className="hidden lg:flex items-center gap-3">
+					<div className="flex items-center gap-3">
 						<div className="px-4 py-2 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-2 shadow-sm">
 							<div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
 							<span className="text-sm font-medium text-green-700">Document Ready</span>
@@ -242,9 +242,11 @@ export default async function Page({ params }: Params) {
 	}
 
 	return (
-		<div className="min-h-screen bg-white">
+		<div className="h-screen flex flex-col bg-white overflow-hidden">
 			<SuccessHeaderClient metadata={metadata} fileName={pdf.fileName} />
-			<PdfViewerWithChatWrapper pdfChunks={chunks} fileName={pdf.fileName} pdfId={pdf.id} />
+			<div className="flex-1 overflow-hidden">
+				<PdfViewerWithChatWrapper pdfChunks={chunks} fileName={pdf.fileName} pdfId={pdf.id} />
+			</div>
 		</div>
 	);
 }

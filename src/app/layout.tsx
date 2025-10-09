@@ -26,12 +26,16 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${inter.className} flex flex-col min-h-screen`}>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+        </head>
+        <body className={`${inter.className} flex flex-col min-h-screen overflow-x-hidden`}>
           {!isLandingPage && <Header />}
-          <main className="flex-1">
+          <main className="flex-1 flex flex-col">
             {children}
           </main>
-          <Footer />
+          {/* Show footer on all pages except PDF viewer with individual PDFs */}
+          {!isPdfViewerPage && <Footer />}
           {/* Show general chatbot on all pages except PDF viewer */}
           {!isPdfViewerPage && <GeneralChatbot />}
         </body>

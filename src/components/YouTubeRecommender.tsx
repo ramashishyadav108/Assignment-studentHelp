@@ -65,27 +65,30 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
 
   return (
     <>
-      {/* Recommender Panel - Bottom Left Corner */}
-      <div className="fixed bottom-6 left-6 z-50 max-w-[800px]">
-        <div className="bg-white border-2 border-purple-500 shadow-2xl rounded-2xl overflow-hidden animate-slideUp">
+      {/* Recommender Panel - Responsive positioning */}
+      <div className="fixed bottom-2 left-2 right-2 sm:bottom-6 sm:left-6 sm:right-auto z-50 sm:max-w-[800px] max-h-[85vh] sm:max-h-[600px]">
+        <div
+          className="bg-white border-2 border-purple-500 shadow-2xl rounded-2xl overflow-y-auto animate-slideUp h-full flex flex-col"
+          style={{ letterSpacing: '0', wordSpacing: 'normal' }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg shadow-lg">
-                <Youtube className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-1.5 sm:p-2 bg-gradient-to-br from-red-500 to-pink-600 rounded-lg shadow-lg flex-shrink-0">
+                <Youtube className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
-              <div>
-                <h3 className="text-base font-bold text-purple-600" style={{ letterSpacing: '0', wordSpacing: 'normal' }}>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-base font-bold text-purple-600 truncate" style={{ letterSpacing: '0', wordSpacing: 'normal' }}>
                   Video Recommendations
                 </h3>
-                <p className="text-xs text-gray-600" style={{ letterSpacing: '0', wordSpacing: 'normal' }}>
+                <p className="text-xs text-gray-600 truncate" style={{ letterSpacing: '0', wordSpacing: 'normal' }}>
                   {topics.slice(0, 2).join(', ')}{topics.length > 2 ? '...' : ''}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-white/50 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-white/50 rounded-lg transition-colors flex-shrink-0"
               aria-label="Close recommendations"
             >
               <X className="w-4 h-4 text-gray-600" />
@@ -114,28 +117,54 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
 
           {/* Video Carousel */}
           {!loading && videos.length > 0 && (
-            <div className="p-4">
-              <div className="flex items-center gap-3">
+            <div className="p-2 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {/* Previous Button */}
                 <button
                   onClick={handlePrevious}
                   disabled={!canGoPrevious}
-                  className={`p-2 rounded-full shadow-md transition-all flex-shrink-0 ${
+                  className={`p-1.5 sm:p-2 rounded-full shadow-md transition-all flex-shrink-0 ${
                     canGoPrevious
                       ? 'bg-purple-600 hover:bg-purple-700 text-white'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                   aria-label="Previous videos"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
 
-                {/* Videos Grid - 3 Videos Horizontally */}
-                <div className="flex gap-3 flex-1 min-w-0">
+                {/* Videos Grid - Responsive: 1 on mobile, 3 on desktop */}
+                <div className="flex gap-2 sm:gap-3 flex-1 min-w-0 scrollbar-hide">
+                  {visibleVideos.slice(0, 1).map((video) => (
+                    <div
+                      key={video.id}
+                      className="w-full sm:hidden bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group flex-shrink-0"
+                      onClick={() => setSelectedVideo(video)}
+                    >
+                      <div className="relative">
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                          <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center opacity-90">
+                            <Youtube className="w-6 h-6 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        <h4 className="font-semibold text-xs line-clamp-2 text-gray-900">
+                          {video.title}
+                        </h4>
+                        <p className="text-[10px] text-gray-600 truncate mt-1">{video.channelTitle}</p>
+                      </div>
+                    </div>
+                  ))}
                   {visibleVideos.map((video) => (
                     <div
                       key={video.id}
-                      className="flex-1 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+                      className="hidden sm:block flex-1 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group"
                       onClick={() => setSelectedVideo(video)}
                     >
                       <div className="relative">
@@ -164,21 +193,22 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
                 <button
                   onClick={handleNext}
                   disabled={!canGoNext}
-                  className={`p-2 rounded-full shadow-md transition-all flex-shrink-0 ${
+                  className={`p-1.5 sm:p-2 rounded-full shadow-md transition-all flex-shrink-0 ${
                     canGoNext
                       ? 'bg-purple-600 hover:bg-purple-700 text-white'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                   aria-label="Next videos"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
               </div>
 
               {/* Video Counter */}
-              <div className="text-center mt-3">
+              <div className="text-center mt-2 sm:mt-3">
                 <p className="text-xs text-gray-600">
-                  {currentIndex + 1}-{Math.min(currentIndex + 3, videos.length)} of {videos.length}
+                  <span className="sm:hidden">{currentIndex + 1} of {videos.length}</span>
+                  <span className="hidden sm:inline">{currentIndex + 1}-{Math.min(currentIndex + 3, videos.length)} of {videos.length}</span>
                 </p>
               </div>
             </div>
@@ -257,6 +287,15 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
 
         .animate-slideUp {
           animation: slideUp 0.3s ease-out;
+        }
+
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </>

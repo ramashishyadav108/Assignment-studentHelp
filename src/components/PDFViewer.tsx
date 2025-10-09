@@ -74,7 +74,10 @@ function PageInput({ currentPage, numPages, onGoTo }: { currentPage: number; num
 
 export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
-  const [scale, setScale] = useState<number>(1.15);
+  // Mobile: 55% zoom (0.55), Desktop: 115% zoom (1.15)
+  const [scale, setScale] = useState<number>(
+    typeof window !== 'undefined' && window.innerWidth < 768 ? 0.55 : 1.15
+  );
   const [showTopics, setShowTopics] = useState<boolean>(true);
   const [outline, setOutline] = useState<OutlineItem[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -109,6 +112,19 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
       // @ts-ignore - CSS imports work at runtime
       import('react-pdf/dist/Page/TextLayer.css');
     }
+  }, []);
+
+  // Handle responsive zoom on window resize
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
+      setScale(isMobile ? 0.55 : 1.15);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   async function onDocumentLoadSuccess({ numPages }: any) {
@@ -220,15 +236,16 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
   };
 
   const zoomIn = () => {
-    setScale((prev) => Math.min(2.0, prev + 0.2));
+    setScale((prev) => Math.min(2.0, prev + 0.15));
   };
 
   const zoomOut = () => {
-    setScale((prev) => Math.max(0.5, prev - 0.2));
+    setScale((prev) => Math.max(0.4, prev - 0.15));
   };
 
   const resetZoom = () => {
-    setScale(1.0);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    setScale(isMobile ? 0.55 : 1.0);
   };
 
   const downloadPDF = () => {
@@ -296,8 +313,8 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
 
   return (
     <div className="flex h-full">
-      {/* Topics/Outline Sidebar */}
-      <div className={`flex-shrink-0 border-r border-gray-200 bg-white transition-all duration-300 overflow-y-auto ${showTopics ? 'w-64' : 'w-0'}`}>
+      {/* Topics/Outline Sidebar - Hidden on mobile */}
+      <div className={`hidden md:block flex-shrink-0 border-r border-gray-200 bg-white transition-all duration-300 overflow-y-auto ${showTopics ? 'w-64' : 'w-0'}`}>
         {showTopics && (
           <div className="p-3">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
@@ -327,12 +344,12 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
       <div className="flex flex-col flex-1 min-w-0">
         {/* Ultra Compact PDF Toolbar (centered) */}
         <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-          <div className="px-4 py-3">{/* increased height */}
-            <div className="flex items-center justify-center gap-4">
-              {/* Toggle Topics */}
+          <div className="px-2 sm:px-4 py-2 sm:py-3">
+            <div className="flex items-center justify-between sm:justify-center gap-2 sm:gap-4">
+              {/* Toggle Topics - Hide on mobile */}
               <button
                 onClick={() => setShowTopics(!showTopics)}
-                className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+                className="p-1 rounded-md hover:bg-gray-100 transition-colors hidden md:block"
                 aria-label="Toggle outline"
                 title={showTopics ? 'Hide outline' : 'Show outline'}
               >
@@ -340,21 +357,22 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
               </button>
 
               {/* Zoom Controls + Page Counter */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-1 sm:flex-initial justify-between sm:justify-center">
                 <div className="flex items-center gap-0.5 bg-white/0">
                   <button
                     onClick={zoomOut}
-                    disabled={scale <= 0.5}
+                    disabled={scale <= 0.4}
                     className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="Zoom out"
                   >
-                    <ZoomOut className="w-3.5 h-3.5" />
+                    <ZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
 
                   <button
                     onClick={resetZoom}
-                    className="px-1.5 py-0.5 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-xs font-medium"
+                    className="px-1.5 py-0.5 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-[10px] sm:text-xs font-medium min-w-[42px] sm:min-w-[48px]"
                     aria-label="Current zoom"
+                    title="Click to reset zoom"
                   >
                     {Math.round(scale * 100)}%
                   </button>
@@ -365,7 +383,7 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
                     className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="Zoom in"
                   >
-                    <ZoomIn className="w-3.5 h-3.5" />
+                    <ZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
                 </div>
 
@@ -383,15 +401,6 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
                     />
                   </div>
                 )}
-
-                {/* Download Button */}
-                <button
-                  onClick={downloadPDF}
-                  className="flex items-center gap-1 px-2 py-0.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  <Download className="w-3 h-3" />
-                  <span className="hidden sm:inline text-xs">Download</span>
-                </button>
               </div>
             </div>
           </div>

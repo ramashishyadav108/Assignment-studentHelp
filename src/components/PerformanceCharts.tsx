@@ -70,45 +70,45 @@ export default function PerformanceCharts({ attempts, averagePercentage }: Perfo
   const chartData = displayAttempts.slice(0, 10).reverse();
 
   return (
-    <div className="space-y-6 mb-8">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6 mb-4 sm:mb-6 md:mb-8">
       {/* Sample Data Notice */}
       {isSampleData && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-4 flex items-center gap-3">
-          <div className="bg-blue-500 p-2 rounded-lg">
-            <BarChart3 className="h-5 w-5 text-white" />
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+          <div className="bg-blue-500 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+            <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-800">📊 Sample Performance Data</p>
-            <p className="text-xs text-gray-600 mt-0.5">Take your first quiz to see your actual performance!</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs sm:text-sm font-semibold text-gray-800">📊 Sample Performance Data</p>
+            <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5">Take your first quiz to see your actual performance!</p>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
         {/* Performance Trend Card */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 card-hover">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-purple-600" />
-              Performance Trend
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 md:p-6 card-hover">
+        <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 flex-shrink-0" />
+              <span className="truncate">Performance Trend</span>
             </h3>
-            <p className="text-sm text-gray-500 mt-1">Recent vs Previous</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Recent vs Previous</p>
           </div>
-          <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold ${
+          <div className={`flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold flex-shrink-0 ${
             isImproving ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
           }`}>
             {isImproving ? (
-              <TrendingUp className="h-4 w-4" />
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
             ) : (
-              <TrendingDown className="h-4 w-4" />
+              <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />
             )}
             {Math.abs(trend).toFixed(1)}%
           </div>
         </div>
 
         {/* Line Chart with Points */}
-        <div className="relative h-64 mb-4 bg-gradient-to-br from-purple-50/50 to-blue-50/50 rounded-xl p-4">
+        <div className="relative h-48 sm:h-56 md:h-64 mb-3 sm:mb-4 bg-gradient-to-br from-purple-50/50 to-blue-50/50 rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4">
           {/* Y-axis labels */}
           <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-gray-400 pr-2">
             <span>100%</span>
@@ -208,19 +208,19 @@ export default function PerformanceCharts({ attempts, averagePercentage }: Perfo
       </div>
 
       {/* Score Distribution Card */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 card-hover">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 md:p-6 card-hover">
+        <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
           <div>
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
+            <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
               Score Distribution
             </h3>
-            <p className="text-sm text-gray-500 mt-1">Performance breakdown</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Performance breakdown</p>
           </div>
         </div>
 
         {/* Horizontal Bar Chart */}
-        <div className="space-y-4">
+        <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
           {Object.entries(scoreRanges).map(([range, count], index) => {
             const percentage = attempts.length > 0 ? (count / attempts.length) * 100 : 0;
             const colors = [
@@ -232,13 +232,13 @@ export default function PerformanceCharts({ attempts, averagePercentage }: Perfo
             
             return (
               <div key={range}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-700">{range}%</span>
-                  <span className="text-sm text-gray-500">{count} quiz{count !== 1 ? 'zes' : ''}</span>
+                <div className="flex items-center justify-between mb-1 sm:mb-1.5 md:mb-2">
+                  <span className="text-xs sm:text-sm font-semibold text-gray-700">{range}%</span>
+                  <span className="text-xs sm:text-sm text-gray-500">{count} quiz{count !== 1 ? 'zes' : ''}</span>
                 </div>
-                <div className="h-8 bg-gray-100 rounded-lg overflow-hidden">
+                <div className="h-6 sm:h-7 md:h-8 bg-gray-100 rounded-lg overflow-hidden">
                   <div
-                    className={`h-full bg-gradient-to-r ${colors[index]} flex items-center justify-end px-3 text-white text-xs font-bold transition-all duration-700`}
+                    className={`h-full bg-gradient-to-r ${colors[index]} flex items-center justify-end px-2 sm:px-3 text-white text-[10px] sm:text-xs font-bold transition-all duration-700`}
                     style={{ width: `${Math.max(percentage, count > 0 ? 10 : 0)}%` }}
                   >
                     {count > 0 && `${percentage.toFixed(0)}%`}
@@ -251,41 +251,40 @@ export default function PerformanceCharts({ attempts, averagePercentage }: Perfo
       </div>
 
       {/* Performance Insights Card */}
-      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl shadow-lg border border-purple-200 p-6 lg:col-span-2">
-        <div className="flex items-start gap-4">
-          <div className="bg-gradient-primary p-3 rounded-xl shadow-lg">
-            <PieChart className="h-6 w-6 text-white" />
+      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl sm:rounded-2xl shadow-lg border border-purple-200 p-3 sm:p-4 md:p-6 lg:col-span-2">
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+          <div className="bg-gradient-primary p-2 sm:p-2.5 rounded-lg shadow-lg flex-shrink-0">
+            <PieChart className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900 mb-3">Performance Insights</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-purple-100">
-                <div className="text-sm text-gray-500 mb-1">Overall Average</div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  {displayAverage.toFixed(1)}%
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {displayAverage >= 90 ? '🌟 Excellent!' : displayAverage >= 75 ? '✨ Great job!' : displayAverage >= 60 ? '👍 Good progress!' : '💪 Keep practicing!'}
-                </div>
-              </div>
-              
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-blue-100">
-                <div className="text-sm text-gray-500 mb-1">Best Score</div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {displayAttempts.length > 0 ? Math.max(...displayAttempts.map(a => a.percentage || 0)).toFixed(1) : '0'}%
-                </div>
-                <div className="text-xs text-gray-500 mt-1">🏆 Personal record</div>
-              </div>
-              
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-pink-100">
-                <div className="text-sm text-gray-500 mb-1">Recent Form</div>
-                <div className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
-                  {recentAvg.toFixed(1)}%
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {isImproving ? '📈 Improving!' : '📊 Steady'}
-                </div>
-              </div>
+          <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900">Performance Insights</h3>
+        </div>
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2.5 sm:p-3 border border-purple-100 hover:shadow-md transition-shadow">
+            <div className="text-[10px] sm:text-xs text-gray-500 mb-1">Overall Average</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              {displayAverage.toFixed(1)}%
+            </div>
+            <div className="text-[10px] sm:text-xs text-gray-500 mt-1">
+              {displayAverage >= 90 ? '🌟 Excellent!' : displayAverage >= 75 ? '✨ Great job!' : displayAverage >= 60 ? '👍 Good progress!' : '💪 Keep practicing!'}
+            </div>
+          </div>
+          
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2.5 sm:p-3 border border-blue-100 hover:shadow-md transition-shadow">
+            <div className="text-[10px] sm:text-xs text-gray-500 mb-1">Best Score</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              {displayAttempts.length > 0 ? Math.max(...displayAttempts.map(a => a.percentage || 0)).toFixed(1) : '0'}%
+            </div>
+            <div className="text-[10px] sm:text-xs text-gray-500 mt-1">🏆 Personal record</div>
+          </div>
+          
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-2.5 sm:p-3 border border-pink-100 hover:shadow-md transition-shadow col-span-2 sm:col-span-1">
+            <div className="text-[10px] sm:text-xs text-gray-500 mb-1">Recent Form</div>
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
+              {recentAvg.toFixed(1)}%
+            </div>
+            <div className="text-[10px] sm:text-xs text-gray-500 mt-1">
+              {isImproving ? '📈 Improving!' : '📊 Steady'}
             </div>
           </div>
         </div>

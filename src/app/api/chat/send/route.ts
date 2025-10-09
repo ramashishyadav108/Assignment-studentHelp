@@ -90,8 +90,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // Generate AI response
-    const aiResponse = await generateChatResponse(message, context, pdfChunks);
+    // Generate AI response (with graceful fallback on model errors)
+    let aiResponse: string;
+    try {
+      aiResponse = await generateChatResponse(message, context, pdfChunks);
+    } catch (genErr: any) {
+      console.error('AI generation failed, returning graceful fallback:', genErr?.message || genErr);
+      // Friendly fallback message for users when model is temporarily unavailable
+      aiResponse = `I'm having trouble generating a response right now because our AI service is temporarily unavailable. Please try again in a few moments. Meanwhile, here are some quick tips that might help:
+\n- Try rephrasing your question to be shorter and more specific.
+- If this question relates to the PDF, include the page number.
+\nI'll retry automatically; thanks for your patience.`;
+    }
 
     // Search for related YouTube videos
     const videos = await searchYouTubeVideos(message, 3);

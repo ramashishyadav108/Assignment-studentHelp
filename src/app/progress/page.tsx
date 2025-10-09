@@ -56,40 +56,61 @@ export default async function ProgressPage() {
   const totalPdfs = user.pdfs?.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
-        <div className="mb-8 md:mb-12 animate-fadeIn">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pb-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="mb-4 sm:mb-6 md:mb-8 animate-fadeIn">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-1 sm:mb-2">
             Progress Dashboard
           </h1>
-          <p className="text-sm md:text-base text-gray-600">Track your learning journey</p>
+          <p className="text-xs sm:text-sm md:text-base text-gray-600">Track your learning journey</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12 animate-fadeInUp">
-          <div className="group relative bg-white rounded-2xl shadow-lg border-2 border-transparent hover:border-purple-200 p-6 md:p-8 overflow-hidden transition-all duration-300 card-hover">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100 to-transparent rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5 md:gap-3 lg:gap-4 mb-4 sm:mb-6 md:mb-8 animate-fadeInUp">
+          <div className="group relative bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg sm:rounded-xl shadow-xl p-3 sm:p-4 md:p-5 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105">
+            <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-white/10 rounded-full -mr-6 sm:-mr-8 md:-mr-10 -mt-6 sm:-mt-8 md:-mt-10 group-hover:scale-150 transition-transform duration-500"></div>
             <div className="relative z-10">
-              <h3 className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide">Total Attempts</h3>
-              <p className="text-3xl md:text-4xl font-bold mt-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">{totalAttempts}</p>
-              <p className="text-xs md:text-sm text-gray-500 mt-2">Quiz attempts completed</p>
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <div className="bg-white/20 p-1 sm:p-1.5 rounded-lg">
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <h3 className="text-[10px] sm:text-xs font-semibold text-white/90 uppercase tracking-wide">Total Attempts</h3>
+              </div>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-0.5 sm:mb-1">{totalAttempts}</p>
+              <p className="text-[10px] sm:text-xs text-white/80">Quiz attempts</p>
             </div>
           </div>
 
-          <div className="group relative bg-white rounded-2xl shadow-lg border-2 border-transparent hover:border-blue-200 p-6 md:p-8 overflow-hidden transition-all duration-300 card-hover">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-transparent rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="group relative bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg sm:rounded-xl shadow-xl p-3 sm:p-4 md:p-5 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105">
+            <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-white/10 rounded-full -mr-6 sm:-mr-8 md:-mr-10 -mt-6 sm:-mt-8 md:-mt-10 group-hover:scale-150 transition-transform duration-500"></div>
             <div className="relative z-10">
-              <h3 className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide">Average Score</h3>
-              <p className="text-3xl md:text-4xl font-bold mt-2 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">{averagePercentage}%</p>
-              <p className="text-xs md:text-sm text-gray-500 mt-2">Overall performance</p>
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <div className="bg-white/20 p-1 sm:p-1.5 rounded-lg">
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <h3 className="text-[10px] sm:text-xs font-semibold text-white/90 uppercase tracking-wide">Average Score</h3>
+              </div>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-0.5 sm:mb-1">{averagePercentage}%</p>
+              <p className="text-[10px] sm:text-xs text-white/80">Performance</p>
             </div>
           </div>
 
-          <div className="group relative bg-white rounded-2xl shadow-lg border-2 border-transparent hover:border-pink-200 p-6 md:p-8 overflow-hidden transition-all duration-300 sm:col-span-2 lg:col-span-1 card-hover">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-100 to-transparent rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="group relative bg-gradient-to-br from-pink-500 to-pink-700 rounded-lg sm:rounded-xl shadow-xl p-3 sm:p-4 md:p-5 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105 col-span-2 md:col-span-1">
+            <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-white/10 rounded-full -mr-6 sm:-mr-8 md:-mr-10 -mt-6 sm:-mt-8 md:-mt-10 group-hover:scale-150 transition-transform duration-500"></div>
             <div className="relative z-10">
-              <h3 className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide">PDFs Tracked</h3>
-              <p className="text-3xl md:text-4xl font-bold mt-2 bg-gradient-to-r from-pink-600 to-pink-800 bg-clip-text text-transparent">{totalPdfs}</p>
-              <p className="text-xs md:text-sm text-gray-500 mt-2">Learning materials</p>
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <div className="bg-white/20 p-1 sm:p-1.5 rounded-lg">
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-[10px] sm:text-xs font-semibold text-white/90 uppercase tracking-wide">PDFs Tracked</h3>
+              </div>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-0.5 sm:mb-1">{totalPdfs}</p>
+              <p className="text-[10px] sm:text-xs text-white/80">Materials</p>
             </div>
           </div>
         </div>
@@ -97,54 +118,83 @@ export default async function ProgressPage() {
         {/* Performance Charts - Always show */}
         <PerformanceCharts attempts={attempts} averagePercentage={averagePercentage} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Recent Attempts</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 md:p-6 hover:shadow-xl transition-shadow">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6">
+                <div className="bg-gradient-to-br from-purple-100 to-blue-100 p-2 rounded-lg">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">Recent Attempts</h2>
               </div>
 
               <AttemptsListClient attempts={attempts as any} />
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold mb-4">Strengths & Weaknesses</h2>
+            <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl sm:rounded-2xl shadow-lg border border-green-200 p-3 sm:p-4 md:p-6 hover:shadow-xl transition-shadow">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="bg-gradient-to-br from-green-500 to-green-700 p-2 rounded-lg">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">Strengths & Weaknesses</h2>
+              </div>
               {user.progress && user.progress.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-2.5 sm:space-y-3">
                   {user.progress.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-medium">{p.subject} • {p.topic}</div>
-                        <div className="text-xs text-gray-500">Last activity: {formatDate(p.lastActivity)}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm">Avg: {p.averageScore?.toFixed(1) ?? 'N/A'}</div>
-                        <div className="text-xs text-gray-500">Quizzes: {p.totalQuizzes}</div>
+                    <div key={p.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-2.5 sm:p-3 border border-green-100 hover:border-green-300 transition-colors">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{p.subject} • {p.topic}</div>
+                          <div className="text-[10px] sm:text-xs text-gray-500">Last: {formatDate(p.lastActivity)}</div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-xs sm:text-sm font-bold text-green-600">Avg: {p.averageScore?.toFixed(1) ?? 'N/A'}%</div>
+                          <div className="text-[10px] sm:text-xs text-gray-500">Quizzes: {p.totalQuizzes}</div>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600">No progress tracking data yet.</p>
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 text-center">
+                  <p className="text-xs sm:text-sm text-gray-600">No progress tracking data yet.</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 mt-1">Complete more quizzes to see your strengths!</p>
+                </div>
               )}
             </div>
           </div>
 
-          <aside className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-2">Per-PDF Progress</h3>
+          <aside className="space-y-3 sm:space-y-4">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl sm:rounded-2xl shadow-lg border border-indigo-200 p-3 sm:p-4 md:p-6 hover:shadow-xl transition-shadow">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-lg">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-gray-900">Per-PDF Progress</h3>
+              </div>
               {Object.keys(perPdf).length === 0 ? (
-                <p className="text-gray-600">No PDF-linked attempts yet.</p>
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 text-center">
+                  <p className="text-xs sm:text-sm text-gray-600">No PDF-linked attempts yet.</p>
+                </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {Object.entries(perPdf).map(([pdfId, s]) => (
-                    <div key={pdfId}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="text-sm font-medium truncate">{s.title}</div>
-                        <div className="text-sm text-gray-500">{s.avg}%</div>
+                    <div key={pdfId} className="bg-white/80 backdrop-blur-sm rounded-lg p-2.5 border border-indigo-100 hover:border-indigo-300 transition-colors">
+                      <div className="flex items-center justify-between mb-1.5 gap-2">
+                        <div className="text-xs sm:text-sm font-semibold text-gray-800 truncate flex-1 min-w-0">{s.title}</div>
+                        <div className="text-xs sm:text-sm font-bold text-indigo-600 flex-shrink-0">{s.avg}%</div>
                       </div>
                       <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                        <div style={{ width: `${s.avg}%` }} className="h-2 bg-gradient-to-r from-purple-600 to-blue-600" />
+                        <div 
+                          style={{ width: `${s.avg}%` }} 
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500"
+                        />
                       </div>
                     </div>
                   ))}
@@ -152,12 +202,25 @@ export default async function ProgressPage() {
               )}
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold mb-2">Quick Links</h3>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/pdfs" className="text-blue-600 hover:underline">My PDFs</Link></li>
-                <li><Link href="/quiz" className="text-blue-600 hover:underline">Generate/Take Quiz</Link></li>
-              </ul>
+            <div className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl sm:rounded-2xl shadow-lg border border-orange-200 p-3 sm:p-4 md:p-6 hover:shadow-xl transition-shadow">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="bg-gradient-to-br from-orange-500 to-pink-600 p-2 rounded-lg">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-gray-900">Quick Links</h3>
+              </div>
+              <div className="space-y-2">
+                <Link href="/pdfs" className="flex items-center gap-2 p-2.5 bg-white/80 backdrop-blur-sm rounded-lg border border-orange-100 hover:border-orange-300 hover:shadow-md transition-all group">
+                  <span className="text-xl">📚</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-700 group-hover:text-orange-600">My PDFs</span>
+                </Link>
+                <Link href="/quiz" className="flex items-center gap-2 p-2.5 bg-white/80 backdrop-blur-sm rounded-lg border border-orange-100 hover:border-orange-300 hover:shadow-md transition-all group">
+                  <span className="text-xl">🎯</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-700 group-hover:text-orange-600">Generate Quiz</span>
+                </Link>
+              </div>
             </div>
           </aside>
         </div>

@@ -13,7 +13,7 @@ interface ChatSession {
 
 export default function GeneralChatbot() {
   const [isOpen, setIsOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false); // Changed to false - history closed by default
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -26,13 +26,13 @@ export default function GeneralChatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load chat history when component opens
+  // Load chat history when history is opened (not when chatbot opens)
   useEffect(() => {
-    if (isOpen && chats.length === 0 && !loadingHistory) {
+    if (historyOpen && chats.length === 0 && !loadingHistory) {
       loadChatHistory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [historyOpen]);
 
   async function loadChatHistory() {
     setLoadingHistory(true);
@@ -42,13 +42,7 @@ export default function GeneralChatbot() {
       
       if (data.success && data.chats) {
         setChats(data.chats);
-        
-        // If there are existing chats, load the most recent one
-        if (data.chats.length > 0) {
-          const mostRecent = data.chats[0];
-          setActiveChatId(mostRecent.id);
-          setMessages(mostRecent.messages);
-        }
+        // Don't auto-load the most recent chat - let user start fresh
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
@@ -108,11 +102,13 @@ export default function GeneralChatbot() {
   function startNewChat() {
     setActiveChatId(null);
     setMessages([]);
+    setHistoryOpen(false); // Close history when starting new chat
   }
 
   function loadChat(chat: ChatSession) {
     setActiveChatId(chat.id);
     setMessages(chat.messages);
+    setHistoryOpen(false); // Close history after selecting a chat
   }
 
   return (
@@ -130,71 +126,72 @@ export default function GeneralChatbot() {
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="fixed right-6 bottom-6 z-50 w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-2xl flex items-center justify-center hover:shadow-green-500/50 hover:scale-110 transition-all duration-300 group"
+            className="fixed right-3 sm:right-6 bottom-3 sm:bottom-6 z-50 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-2xl flex items-center justify-center hover:shadow-green-500/50 hover:scale-110 transition-all duration-300 group"
             title="Open AI Assistant"
           >
-            <MessageSquare className="w-7 h-7 group-hover:scale-110 transition-transform" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse"></span>
+            <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full animate-pulse"></span>
           </button>
         )}
 
         {/* Chat panel when open */}
         {isOpen && (
-          <div className="fixed right-4 bottom-4 w-full sm:w-[500px] lg:w-[580px] flex flex-col bg-white shadow-2xl z-50 rounded-2xl border-2 border-slate-200 overflow-hidden" 
-               style={{ height: 'calc(100vh - 120px)', maxHeight: '700px' }}>
+          <div className="fixed inset-x-2 bottom-2 top-2 sm:inset-x-auto sm:top-auto sm:right-4 sm:bottom-4 sm:w-[500px] lg:w-[580px] sm:h-[600px] flex flex-col bg-white shadow-2xl z-50 rounded-2xl border-2 border-slate-200 overflow-hidden" 
+               style={{ maxHeight: 'calc(100vh - 16px)' }}>
             {/* Header with gradient background */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 shadow-lg flex-shrink-0">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg">
-                    <Sparkles className="w-5 h-5 text-white" />
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-3 sm:p-4 shadow-lg flex-shrink-0">
+              <div className="flex items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <div>
-                    <h2 className="text-base font-bold text-white">
+                  <div className="min-w-0">
+                    <h2 className="text-sm sm:text-base font-bold text-white truncate">
                       AI Assistant 🤖
                     </h2>
-                    <p className="text-xs text-green-100">Always here to help you</p>
+                    <p className="text-xs text-green-100 hidden sm:block">Always here to help you</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <button
                     onClick={startNewChat}
                     aria-label="New chat"
-                    className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-200 flex items-center gap-1.5 text-white text-xs font-semibold"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-1.5 text-white text-xs font-semibold"
                     title="Start new conversation"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span className="hidden sm:inline">New</span>
                   </button>
 
                   <button
                     onClick={() => setHistoryOpen(h => !h)}
                     aria-label={historyOpen ? 'Hide history' : 'Show history'}
-                    className={`p-2 rounded-lg transition-all duration-200 ${
+                    className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${
                       historyOpen ? 'bg-white/30' : 'bg-white/10 hover:bg-white/20'
                     }`}
                     title={historyOpen ? 'Hide history' : 'Show history'}
                   >
-                    <List className="w-4 h-4 text-white" />
+                    <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                   </button>
 
                   <button
                     onClick={() => setIsOpen(false)}
                     aria-label="Close chat"
-                    className="p-2 rounded-lg hover:bg-white/20 transition-all duration-200"
+                    className="p-1.5 sm:p-2 rounded-lg hover:bg-white/20 transition-all duration-200"
                     title="Close chat"
                   >
-                    <X className="w-5 h-5 text-white" />
+                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </button>
                 </div>
               </div>
             </div>
 
           {/* Messages container with custom scrollbar */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 relative min-h-0 bg-gradient-to-b from-slate-50 to-white">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5 space-y-2 sm:space-y-3 relative min-h-0 bg-gradient-to-b from-slate-50 to-white">
+            {/* Note: processing indicator is shown inline in chat messages (no overlay) */}
             {/* Left history slider inside chat panel - Now with blur effect */}
-            <div className={`absolute left-0 top-0 bottom-0 w-72 sm:w-80 bg-white/95 backdrop-blur-xl border-r-2 border-slate-200 shadow-2xl overflow-y-auto transition-all duration-300 z-50 ${historyOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className={`absolute left-0 top-0 bottom-0 w-64 sm:w-72 lg:w-80 bg-white/95 backdrop-blur-xl border-r-2 border-slate-200 shadow-2xl overflow-y-auto transition-all duration-300 z-50 ${historyOpen ? 'translate-x-0' : '-translate-x-full'}`}>
               <div className="sticky top-0 bg-gradient-to-r from-green-50 to-emerald-50 backdrop-blur-sm z-10 p-4 border-b-2 border-green-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

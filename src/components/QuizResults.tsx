@@ -111,18 +111,18 @@ export default function QuizResults({ attempt }: Props) {
   console.log('Wrong answer topics:', wrongAnswerTopics);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-6">
       {/* YouTube Recommendations Floating Button */}
       {wrongAnswerTopics.length > 0 && !showRecommendations && (
         <button
           onClick={() => setShowRecommendations(true)}
-          className="fixed left-6 bottom-6 z-40 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group"
+          className="fixed left-3 sm:left-6 bottom-3 sm:bottom-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group"
           title="View video recommendations"
         >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor">
             <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
           </svg>
-          <span className="font-medium hidden sm:inline">Recommendations</span>
+          <span className="font-medium text-xs sm:text-sm hidden sm:inline">Recommendations</span>
         </button>
       )}
 
@@ -133,64 +133,64 @@ export default function QuizResults({ attempt }: Props) {
         onClose={() => setShowRecommendations(false)}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Results Header */}
-        <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl shadow-lg p-8 text-white mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{attempt.quiz.title}</h1>
-              <p className="text-purple-100">
+        <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 text-white mb-4 sm:mb-6 md:mb-8">
+          <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 line-clamp-2">{attempt.quiz.title}</h1>
+              <p className="text-xs sm:text-sm md:text-base text-purple-100">
                 {attempt.quiz.questionType} Quiz • {attempt.quiz.totalQuestions} Questions
               </p>
             </div>
-            <Trophy className="h-16 w-16 text-yellow-300" />
+            <Trophy className="h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 text-yellow-300 flex-shrink-0" />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="h-5 w-5" />
-                <span className="text-sm font-medium">Score</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2.5 sm:p-3 md:p-4">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2">
+                <Award className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                <span className="text-[10px] sm:text-xs md:text-sm font-medium">Score</span>
               </div>
-              <p className="text-2xl font-bold">
+              <p className="text-base sm:text-xl md:text-2xl font-bold">
                 {attempt.score.toFixed(1)} / {attempt.totalScore}
               </p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5" />
-                <span className="text-sm font-medium">Percentage</span>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2.5 sm:p-3 md:p-4">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2">
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                <span className="text-[10px] sm:text-xs md:text-sm font-medium">Percentage</span>
               </div>
-              <p className="text-2xl font-bold">{attempt.percentage.toFixed(1)}%</p>
+              <p className="text-base sm:text-xl md:text-2xl font-bold">{attempt.percentage.toFixed(1)}%</p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="text-sm font-medium">Correct</span>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2.5 sm:p-3 md:p-4">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2">
+                <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                <span className="text-[10px] sm:text-xs md:text-sm font-medium">Correct</span>
               </div>
-              <p className="text-2xl font-bold">
+              <p className="text-base sm:text-xl md:text-2xl font-bold">
                 {correctAnswers} / {attempt.quiz.totalQuestions}
               </p>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-5 w-5" />
-                <span className="text-sm font-medium">Time</span>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2.5 sm:p-3 md:p-4">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                <span className="text-[10px] sm:text-xs md:text-sm font-medium">Time</span>
               </div>
-              <p className="text-2xl font-bold">{formatTime(attempt.timeTaken)}</p>
+              <p className="text-base sm:text-xl md:text-2xl font-bold">{formatTime(attempt.timeTaken)}</p>
             </div>
           </div>
 
-          <div className="mt-6 flex items-center gap-4">
-            <div className={`px-6 py-3 rounded-lg ${gradeInfo.bg}`}>
-              <span className={`text-3xl font-bold ${gradeInfo.color}`}>
+          <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+            <div className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg ${gradeInfo.bg} flex-shrink-0`}>
+              <span className={`text-2xl sm:text-3xl font-bold ${gradeInfo.color}`}>
                 {gradeInfo.grade}
               </span>
             </div>
-            <div className="flex-1 text-sm">
+            <div className="flex-1 text-xs sm:text-sm">
               <p className="font-medium">
                 {attempt.percentage >= 80
                   ? 'Excellent work! 🎉'
@@ -357,48 +357,48 @@ export default function QuizResults({ attempt }: Props) {
         </div>
 
         {/* Performance Summary */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Performance Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                <span className="font-medium text-green-900">Correct Answers</span>
+        <div className="mt-4 sm:mt-6 md:mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6">
+          <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-3 sm:mb-4">Performance Summary</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+            <div className="p-2.5 sm:p-3 md:p-4 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2">
+                <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-green-600 flex-shrink-0" />
+                <span className="font-medium text-green-900 text-[10px] sm:text-xs md:text-sm">Correct</span>
               </div>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-base sm:text-xl md:text-2xl font-bold text-green-600">
                 {correctAnswers} ({((correctAnswers / attempt.quiz.totalQuestions) * 100).toFixed(0)}%)
               </p>
             </div>
 
-            <div className="p-4 bg-red-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <XCircle className="h-5 w-5 text-red-600" />
-                <span className="font-medium text-red-900">Incorrect Answers</span>
+            <div className="p-2.5 sm:p-3 md:p-4 bg-red-50 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2">
+                <XCircle className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-red-600 flex-shrink-0" />
+                <span className="font-medium text-red-900 text-[10px] sm:text-xs md:text-sm">Incorrect</span>
               </div>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-base sm:text-xl md:text-2xl font-bold text-red-600">
                 {attempt.quiz.totalQuestions - correctAnswers - unattemptedCount} (
                 {((((attempt.quiz.totalQuestions - correctAnswers - unattemptedCount) / attempt.quiz.totalQuestions) * 100)).toFixed(0)}
                 %)
               </p>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="h-5 w-5 inline-block rounded-full bg-gray-400" />
-                <span className="font-medium text-gray-900">Unattempted</span>
+            <div className="p-2.5 sm:p-3 md:p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2">
+                <span className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 inline-block rounded-full bg-gray-400 flex-shrink-0" />
+                <span className="font-medium text-gray-900 text-[10px] sm:text-xs md:text-sm">Unattempted</span>
               </div>
-              <p className="text-2xl font-bold text-gray-700">
+              <p className="text-base sm:text-xl md:text-2xl font-bold text-gray-700">
                 {unattemptedCount} (
                 {((unattemptedCount / attempt.quiz.totalQuestions) * 100).toFixed(0)}%)
               </p>
             </div>
 
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-purple-600" />
-                <span className="font-medium text-purple-900">Points Earned</span>
+            <div className="p-2.5 sm:p-3 md:p-4 bg-purple-50 rounded-lg">
+              <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2">
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-purple-600 flex-shrink-0" />
+                <span className="font-medium text-purple-900 text-[10px] sm:text-xs md:text-sm">Points</span>
               </div>
-              <p className="text-2xl font-bold text-purple-600">
+              <p className="text-base sm:text-xl md:text-2xl font-bold text-purple-600">
                 {attempt.score.toFixed(1)} / {attempt.totalScore}
               </p>
             </div>
