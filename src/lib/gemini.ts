@@ -17,9 +17,8 @@ function getGenAI() {
   return genAI;
 }
 
-// Default model candidates for educational chatbot
-// Using only one model to prevent excessive API calls from fallback attempts
-function getModelCandidates(defaults: string[] = ['gemini-1.5-flash']) {
+// Default model candidates for educational chatbot with fallback
+function getModelCandidates(defaults: string[] = ['gemini-2.0-flash-exp', 'gemini-1.5-flash']) {
   const env = process.env.GENERATIVE_MODEL_CANDIDATES;
   if (!env) return defaults;
   return env.split(',').map(s => s.trim()).filter(Boolean);
@@ -34,8 +33,16 @@ async function safeGenerateContent(prompt: string, candidates?: string[]) {
       const client = getGenAI();
       const model = client.getGenerativeModel({ model: modelName });
       
-      // Token count check removed to save 1 API call per request
-      // The API will return an error if tokens exceed limit, which we'll handle in catch block
+      // Check token count to avoid exceeding limits
+      try {
+        const { totalTokens } = await model.countTokens(prompt);
+        if (totalTokens > 1048576) {
+          throw new Error(`Prompt exceeds token limit of 1,048,576 (got ${totalTokens})`);
+        }
+      } catch (countErr: any) {
+        console.warn(`Token count check failed for ${modelName}:`, countErr?.message);
+        // Continue anyway - let the API handle it
+      }
 
       // Try with retries on transient errors (e.g., 429, 503, overloaded)
       const maxAttempts = 3; // Reduced from 500 to prevent API quota exhaustion
@@ -50,6 +57,7 @@ async function safeGenerateContent(prompt: string, candidates?: string[]) {
             throw new Error('Empty response from model');
           }
 
+          console.log(`✅ Successfully generated content with ${modelName} on attempt ${attempt}`);
           return result;
         } catch (innerErr: any) {
           // If this is a transient error, backoff and retry; otherwise break to try next model
@@ -57,7 +65,10 @@ async function safeGenerateContent(prompt: string, candidates?: string[]) {
           const msg = (innerErr?.message || '').toLowerCase();
           const isTransient = status === 429 || status === 503 || msg.includes('overloaded') || msg.includes('temporarily');
 
-          console.error(`Attempt ${attempt} for model ${modelName} failed:`, { message: innerErr?.message, status });
+          console.error(`Attempt ${attempt}/${maxAttempts} for model ${modelName} failed:`, { 
+            message: innerErr?.message, 
+            status 
+          });
 
           if (!isTransient) {
             // Non-transient error: stop retrying this model and move to next
@@ -69,15 +80,16 @@ async function safeGenerateContent(prompt: string, candidates?: string[]) {
             throw innerErr;
           }
 
-          // Linear backoff before next attempt (simpler and faster than exponential)
-          const backoffMs = 1000 * attempt; // 1s, 2s, 3s
+          // Exponential backoff before next attempt
+          const backoffMs = 500 * Math.pow(2, attempt - 1); // 500ms, 1000ms, 2000ms
+          console.log(`Retrying in ${backoffMs}ms...`);
           await new Promise((res) => setTimeout(res, backoffMs));
           continue;
         }
       }
-    } catch (err: any) {
+        } catch (err: any) {
       lastErr = err;
-      console.error(`Model ${modelName} failed:`, {
+      console.error(`Model ${modelName} failed after retries:`, {
         message: err?.message || 'Unknown error',
         status: err?.status,
         statusText: err?.statusText,
@@ -86,8 +98,9 @@ async function safeGenerateContent(prompt: string, candidates?: string[]) {
       continue;
     }
   }
+  
   const errorMessage = lastErr?.message || 'Unknown error occurred';
-  console.error('All model candidates failed. Last error:', {
+  console.error('❌ All model candidates failed. Last error:', {
     message: errorMessage,
     error: lastErr
   });
@@ -101,8 +114,8 @@ export async function generateQuizQuestions(
   difficulty: 'Easy' | 'Medium' | 'Hard'
 ) {
   // Truncate content to avoid token limit (approximate 4 chars per token)
-  // Reduced from 500K to 50K to minimize API token usage
-  const truncatedContent = content.substring(0, 50000);
+  // Reduced from 500K to 100K for better balance
+  const truncatedContent = content.substring(0, 100000);
   const prompt = `You are an educational quiz generator. Generate ${count} ${type} questions based on the following content.
 
 Content:
@@ -188,8 +201,8 @@ export async function generateChatResponse(
   pdfChunks?: Array<{ content: string; pageNumber: number }>
 ) {
   // Truncate context to avoid token limit
-  // Reduced from 100K to 20K to minimize API token usage
-  const truncatedContext = context.substring(0, 20000);
+  // Reduced from 100K to 50K for better balance
+  const truncatedContext = context.substring(0, 50000);
   let prompt = `You are an educational assistant helping students learn from their coursebooks.
 
 Context from PDF:
@@ -200,10 +213,10 @@ ${truncatedContext}
   if (pdfChunks && pdfChunks.length > 0) {
     prompt += `Relevant excerpts from the PDF:\n`;
     let totalChunkLength = 0;
-    // Reduced from 5 to 3 chunks to minimize token usage
-    pdfChunks.slice(0, 3).forEach((chunk) => {
-      const chunkContent = chunk.content.substring(0, 5000); // Reduced from 10K to 5K
-      if (totalChunkLength + chunkContent.length <= 50000) { // Reduced from 400K to 50K
+    // Limit to 5 chunks to avoid token overflow
+    pdfChunks.slice(0, 5).forEach((chunk) => {
+      const chunkContent = chunk.content.substring(0, 5000);
+      if (totalChunkLength + chunkContent.length <= 100000) {
         prompt += `\n[Page ${chunk.pageNumber}]: "${chunkContent}"\n`;
         totalChunkLength += chunkContent.length;
       }
