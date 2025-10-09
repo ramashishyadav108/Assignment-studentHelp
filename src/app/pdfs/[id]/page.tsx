@@ -205,13 +205,9 @@ export default async function Page({ params }: Params) {
 		const arrayBuffer = await response.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
 
-		// Create temp file for processing
+		// Create temp file for processing in /tmp (Vercel-compatible)
 		const { writeFile, unlink } = await import('fs/promises');
-		const fs = await import('fs');
-		const tempDir = path.join(process.cwd(), 'temp');
-		if (!fs.existsSync(tempDir)) {
-			fs.mkdirSync(tempDir, { recursive: true });
-		}
+		const tempDir = '/tmp';
 		const tempFilePath = path.join(tempDir, `page-${Date.now()}-${pdf.fileName}`);
 		await writeFile(tempFilePath, buffer);
 

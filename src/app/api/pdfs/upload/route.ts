@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir, unlink } from 'fs/promises';
+import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { prisma } from '@/lib/prisma';
 import { extractPDFText, chunkPDFText, generateTextEmbedding } from '@/lib/pdf-processor';
@@ -65,9 +65,8 @@ export async function POST(req: Request) {
     // Upload to Cloudinary
     const cloudinaryResult = await uploadPDFToCloudinary(buffer, file.name);
 
-    // Create temporary file for PDF processing (needed for pdf-parse)
-    const tempDir = join(process.cwd(), 'temp');
-    await mkdir(tempDir, { recursive: true });
+    // Create temporary file for PDF processing in /tmp (Vercel-compatible)
+    const tempDir = '/tmp';
     const tempFilePath = join(tempDir, fileName);
     await writeFile(tempFilePath, buffer);
 

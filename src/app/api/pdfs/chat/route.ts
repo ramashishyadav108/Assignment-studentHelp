@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { generateChatResponse } from '@/lib/gemini';
 import { extractPDFText, chunkPDFText, generateTextEmbedding, cosineSimilarity } from '@/lib/pdf-processor';
 import path from 'path';
-import fs from 'fs';
 import { writeFile, unlink } from 'fs/promises';
 import { prisma } from '@/lib/prisma';
 
@@ -36,12 +35,9 @@ export async function POST(req: Request) {
     }
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    
-    // Create temp file for processing
-    const tempDir = path.join(process.cwd(), 'temp');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
+
+    // Create temp file for processing in /tmp (Vercel-compatible)
+    const tempDir = '/tmp';
     const filePath = path.join(tempDir, `chat-${Date.now()}-${fileName}`);
     await writeFile(filePath, buffer);
 
