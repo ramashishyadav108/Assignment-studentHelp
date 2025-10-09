@@ -1,4 +1,4 @@
-import { pdf } from 'pdf-parse';
+import PDFParser from 'pdf2json';
 import { readFile } from 'fs/promises';
 
 export interface PDFMetadata {
@@ -8,14 +8,60 @@ export interface PDFMetadata {
 }
 
 export async function extractPDFText(filePath: string): Promise<PDFMetadata> {
-  const dataBuffer = await readFile(filePath);
-  const data = await pdf(dataBuffer);
+  return new Promise((resolve, reject) => {
+    const pdfParser = new PDFParser();
 
-  return {
-    title: (data.info as any)?.Title || 'Untitled',
-    totalPages: data.total,
-    text: data.text,
-  };
+    pdfParser.on('pdfParser_dataError', (errData: any) => {
+      reject(new Error(errData.parserError));
+    });
+
+    pdfParser.on('pdfParser_dataReady', (pdfData: any) => {
+      try {
+        // Extract text from all pages
+        let fullText = '';
+        let totalPages = 0;
+
+        if (pdfData.Pages && Array.isArray(pdfData.Pages)) {
+          totalPages = pdfData.Pages.length;
+
+          pdfData.Pages.forEach((page: any) => {
+            if (page.Texts && Array.isArray(page.Texts)) {
+              page.Texts.forEach((text: any) => {
+                if (text.R && Array.isArray(text.R)) {
+                  text.R.forEach((r: any) => {
+                    if (r.T) {
+                      // Decode URI-encoded text
+                      fullText += decodeURIComponent(r.T) + ' ';
+                    }
+                  });
+                }
+              });
+              // Add page break
+              fullText += '\n\n';
+            }
+          });
+        }
+
+        // Extract title from metadata or use filename
+        const title = pdfData.Meta?.Title || 'Untitled';
+
+        resolve({
+          title: title,
+          totalPages: totalPages,
+          text: fullText.trim(),
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    // Load PDF file
+    readFile(filePath)
+      .then((buffer) => {
+        pdfParser.parseBuffer(buffer);
+      })
+      .catch(reject);
+  });
 }
 
 export interface PDFChunk {
@@ -26,10 +72,10 @@ export interface PDFChunk {
 
 export function chunkPDFText(text: string, chunkSize: number = 1000): PDFChunk[] {
   const chunks: PDFChunk[] = [];
-  
+
   // Split by pages first (looking for page break indicators)
-  const pagePattern = /\f|\n\s*Page\s+\d+\s*\n/gi;
-  const pages = text.split(pagePattern);
+  const pagePattern = /\f|\n\s*Page\s+\d+\s*\n|\n\n/gi;
+  const pages = text.split(pagePattern).filter(p => p.trim().length > 0);
 
   pages.forEach((pageText, pageIndex) => {
     const sentences = pageText.match(/[^.!?]+[.!?]+/g) || [pageText];
@@ -64,7 +110,7 @@ export function chunkPDFText(text: string, chunkSize: number = 1000): PDFChunk[]
 // Simple cosine similarity for vector search
 export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length !== vecB.length) return 0;
-  
+
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
@@ -82,14 +128,14 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
 export function generateTextEmbedding(text: string, vocabulary: string[] = []): number[] {
   const words = text.toLowerCase().split(/\W+/).filter(w => w.length > 2);
   const wordFreq = new Map<string, number>();
-  
+
   words.forEach(word => {
     wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
   });
 
   // If no vocabulary provided, use the words from the text
   const vocab = vocabulary.length > 0 ? vocabulary : Array.from(wordFreq.keys());
-  
+
   // Create embedding vector
   return vocab.map(word => wordFreq.get(word) || 0);
 }
@@ -101,7 +147,7 @@ export function findRelevantChunks(
   topK: number = 3
 ): Array<{ content: string; score: number; index: number }> {
   const queryEmbedding = generateTextEmbedding(query, vocabulary);
-  
+
   const scores = chunks.map((chunk, index) => ({
     content: chunk.content,
     score: cosineSimilarity(queryEmbedding, chunk.embedding),
