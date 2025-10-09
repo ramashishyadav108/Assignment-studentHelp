@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateChatResponse } from '@/lib/gemini';
 import { findRelevantChunks } from '@/lib/pdf-processor';
-import { searchYouTubeVideos } from '@/lib/youtube';
 
 // Handle OPTIONS for CORS
 export async function OPTIONS() {
@@ -103,17 +102,13 @@ export async function POST(req: Request) {
 \nI'll retry automatically; thanks for your patience.`;
     }
 
-    // Search for related YouTube videos
-    const videos = await searchYouTubeVideos(message, 3);
-
-    // Save assistant message
+    // Save assistant message (YouTube videos removed - only use dedicated YouTube recommendation feature)
     const assistantMessage = await prisma.chatMessage.create({
       data: {
         chatId: chat.id,
         role: 'assistant',
         content: aiResponse,
         pdfReferences: pdfChunks.length > 0 ? JSON.parse(JSON.stringify(pdfChunks)) : undefined,
-        videoReferences: videos.length > 0 ? JSON.parse(JSON.stringify(videos)) : undefined,
         pdfId,
       },
     });

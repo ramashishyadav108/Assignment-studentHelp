@@ -59,6 +59,8 @@ export default function PdfViewerWithChat({
   // YouTube Recommender state
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [pdfTopics, setPdfTopics] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [manualSearchQuery, setManualSearchQuery] = useState('');
 
   const dividerRef = useRef<HTMLDivElement | null>(null);
   const leftRef = useRef<HTMLDivElement | null>(null);
@@ -67,28 +69,6 @@ export default function PdfViewerWithChat({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Extract topics from PDF content
-  useEffect(() => {
-    if (pdfChunks.length > 0) {
-      const topics: string[] = [];
-      const chunksToAnalyze = pdfChunks.slice(0, 5);
-      chunksToAnalyze.forEach(chunk => {
-        const sentences = chunk.content.split(/[.!?]\s+/);
-        sentences.slice(0, 2).forEach(sentence => {
-          if (sentence.length > 10 && sentence.length < 100) {
-            // Normalize text: remove extra spaces and weird characters
-            const normalized = sentence.trim().replace(/\s+/g, ' ').replace(/[^\w\s\-,]/g, '');
-            if (normalized.length > 10) {
-              topics.push(normalized);
-            }
-          }
-        });
-      });
-      const uniqueTopics = [...new Set(topics)].slice(0, 5);
-      setPdfTopics(uniqueTopics.length > 0 ? uniqueTopics : [fileName]);
-    }
-  }, [pdfChunks, fileName]);
 
   // Load chat history when component opens. We load history to populate the sidebar
   // but we intentionally DO NOT auto-open the most recent chat — we want a new chat
@@ -132,6 +112,61 @@ export default function PdfViewerWithChat({
     } finally {
       setLoadingHistory(false);
     }
+  }
+
+  // Extract important keywords from text content
+  function extractKeywords(text: string, maxKeywords: number = 8): string[] {
+    // Common stopwords to filter out
+    const stopwords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+      'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+      'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these',
+      'those', 'it', 'its', 'they', 'their', 'them', 'what', 'which', 'who',
+      'when', 'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few',
+      'more', 'most', 'other', 'some', 'such', 'no', 'not', 'only', 'own',
+      'same', 'so', 'than', 'too', 'very', 'just', 'there', 'here', 'then',
+      'now', 'even', 'also', 'well', 'back', 'through', 'page', 'number'
+    ]);
+
+    // Clean and tokenize text
+    const words = text
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(word => {
+        return word.length > 3 && 
+               !stopwords.has(word) && 
+               !/^\d+$/.test(word); // exclude pure numbers
+      });
+
+    // Count word frequency
+    const wordFreq: { [key: string]: number } = {};
+    words.forEach(word => {
+      wordFreq[word] = (wordFreq[word] || 0) + 1;
+    });
+
+    // Sort by frequency and get top keywords
+    const sortedWords = Object.entries(wordFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, maxKeywords)
+      .map(([word]) => word);
+
+    return sortedWords;
+  }
+
+  // Extract keywords from current page content
+  function getCurrentPageKeywords(): string[] {
+    const pageChunks = pdfChunks.filter(chunk => chunk.pageNumber === currentPage);
+    if (pageChunks.length === 0) {
+      console.log('📄 No chunks found for page', currentPage);
+      return [];
+    }
+
+    const pageContent = pageChunks.map(chunk => chunk.content).join(' ');
+    const keywords = extractKeywords(pageContent, 8);
+    console.log('🔍 Page', currentPage, 'keywords:', keywords);
+    return keywords;
   }
 
   const startDrag = (e: React.MouseEvent) => {
@@ -216,23 +251,27 @@ export default function PdfViewerWithChat({
 
   const pdfUrl = `/api/pdfs/file/${encodeURIComponent(fileName)}`;
 
+  // Handler for showing recommendations based on current page
+  const handleShowRecommendations = () => {
+    const pageKeywords = getCurrentPageKeywords();
+    if (pageKeywords.length > 0) {
+      setPdfTopics(pageKeywords);
+    }
+    setShowRecommendations(true);
+  };
+
+  // Handler for manual search
+  const handleManualSearch = () => {
+    if (manualSearchQuery.trim()) {
+      setPdfTopics([manualSearchQuery.trim()]);
+      setShowRecommendations(true);
+      setManualSearchQuery('');
+    }
+  };
+
   return (
     <div className="relative h-[calc(100vh-80px)] bg-white">
         
-        {/* YouTube Recommendations Floating Button */}
-        {pdfTopics.length > 0 && !showRecommendations && (
-          <button
-            onClick={() => setShowRecommendations(true)}
-            className="fixed left-2 sm:left-6 bottom-20 sm:bottom-6 z-40 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 group text-xs sm:text-base"
-            title="View video recommendations"
-          >
-            <svg className="w-4 h-4 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-            </svg>
-            <span className="font-medium hidden sm:inline">Recommendations</span>
-          </button>
-        )}
-
         {/* YouTube Recommender Component */}
         <YouTubeRecommender
           topics={pdfTopics}
@@ -253,8 +292,8 @@ export default function PdfViewerWithChat({
 
   {/* Mobile: Stack vertically (55% PDF, 45% Chat), Desktop: Side by side */}
   <div className={`flex ${isOpen ? 'flex-col md:flex-row md:items-center' : 'flex-col'} h-full`}> 
-    {/* PDF Viewer pane (boxed) */}
-    <div ref={leftRef} className={`transition-all duration-300 p-3 md:p-4 ${isOpen ? 'h-1/2 md:h-full md:w-1/2' : 'w-full h-full'}`}>
+    {/* PDF Viewer pane (boxed) - Increased width */}
+    <div ref={leftRef} className={`relative transition-all duration-300 p-2 sm:p-3 md:p-4 ${isOpen ? 'h-1/2 md:h-full md:w-[60%] lg:w-[65%]' : 'w-full h-full'}`}>
       <div className="h-full bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
         {/* Header for PDF box */}
         <div className="flex items-center justify-between px-3 py-2 border-b">
@@ -263,13 +302,54 @@ export default function PdfViewerWithChat({
         </div>
 
         {/* Scrollable PDF content */}
-        <div className="flex-1 overflow-auto">
-          <PDFViewer pdfUrl={pdfUrl} fileName={fileName} />
+        <div className="flex-1 overflow-auto relative">
+          <PDFViewer 
+            pdfUrl={pdfUrl} 
+            fileName={fileName}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+          
+          {/* YouTube Recommendations Button - Inside PDF Box, positioned at bottom with spacing */}
+          {!showRecommendations && (
+            <div className="absolute left-2 sm:left-4 bottom-4 sm:bottom-6 z-40 flex flex-col-reverse gap-2 max-w-[calc(100%-1rem)] sm:max-w-[calc(100%-2rem)]">
+              {/* Manual Search Input - Shows at bottom */}
+              <div className="flex gap-1 bg-white rounded-full shadow-lg p-1 border-2 border-purple-300">
+                <input
+                  type="text"
+                  value={manualSearchQuery}
+                  onChange={(e) => setManualSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
+                  placeholder="Search videos..."
+                  className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-full flex-1 min-w-0 outline-none"
+                />
+                <button
+                  onClick={handleManualSearch}
+                  disabled={!manualSearchQuery.trim()}
+                  className="px-2 sm:px-3 py-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full hover:shadow-md transition-all text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                  title="Search YouTube videos"
+                >
+                  Search
+                </button>
+              </div>
+              
+              {/* Recommendations Button - Shows above search */}
+              <button
+                onClick={handleShowRecommendations}
+                className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-xs sm:text-sm"
+                title="View video recommendations for current page"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span className="font-medium">Page {currentPage}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
 
-    {/* Chat panel + divider when open (boxed) */}
+    {/* Chat panel + divider when open (boxed) - Decreased width, increased height */}
     {isOpen && (
       <>
         <div
@@ -279,8 +359,8 @@ export default function PdfViewerWithChat({
           aria-hidden
         />
 
-        <div ref={rightRef} className="transition-all duration-300 p-3 md:p-4 h-1/2 md:h-auto md:w-[55%] lg:w-[60%] md:self-center md:h-[720px]">
-          <div className="h-full bg-white shadow-2xl rounded-2xl border-2 border-slate-200 overflow-hidden flex flex-col">
+        <div ref={rightRef} className="transition-all duration-300 p-2 sm:p-3 md:p-4 flex flex-col h-1/2 md:h-auto md:w-[40%] lg:w-[35%] md:self-center" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+          <div className="flex-1 bg-white shadow-2xl rounded-2xl border-2 border-slate-200 overflow-hidden flex flex-col min-h-0">
             {/* Chat Header (green theme) - Match outer chatbot */}
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-2 sm:p-3 md:p-4 shadow-lg flex-shrink-0">
               <div className="flex items-center justify-between gap-1.5 sm:gap-2 md:gap-3">
@@ -328,7 +408,7 @@ export default function PdfViewerWithChat({
             </div>
 
             {/* Messages container with custom scrollbar - Match outer chatbot */}
-            <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 lg:p-5 space-y-1.5 sm:space-y-2 md:space-y-3 relative min-h-0 bg-gradient-to-b from-slate-50 to-white">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 lg:p-5 space-y-2 sm:space-y-3 relative min-h-0 bg-gradient-to-b from-slate-50 to-white">
               {/* Blur overlay for chat area only when history is open */}
               {historyOpen && (
                 <div 
@@ -478,7 +558,7 @@ export default function PdfViewerWithChat({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     disabled={loading}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 bg-white border-2 border-slate-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-2 sm:focus:ring-4 focus:ring-green-100 transition-all duration-200 text-xs sm:text-sm resize-none shadow-md hover:shadow-lg disabled:opacity-50"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 bg-white border-2 border-slate-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-2 sm:focus:ring-4 focus:ring-green-100 transition-all duration-200 text-xs sm:text-sm resize-none shadow-md hover:shadow-lg disabled:opacity-50 overflow-y-auto"
                     placeholder="💬 Ask about the PDF..."
                     rows={1}
                     onKeyDown={(e) => {
@@ -487,7 +567,7 @@ export default function PdfViewerWithChat({
                         sendQuery();
                       }
                     }}
-                    style={{ minHeight: '40px', maxHeight: '100px' }}
+                    style={{ minHeight: '40px', maxHeight: '80px' }}
                   />
                   <div className="absolute right-2 sm:right-3 bottom-2 sm:bottom-3 text-slate-300">
                     <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />

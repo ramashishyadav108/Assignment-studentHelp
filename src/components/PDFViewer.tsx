@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, List, ChevronDown
 interface PDFViewerProps {
   pdfUrl: string;
   fileName: string;
+  onPageChange?: (page: number) => void;
 }
 
 interface OutlineItem {
@@ -72,7 +73,7 @@ function PageInput({ currentPage, numPages, onGoTo }: { currentPage: number; num
   );
 }
 
-export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
+export default function PDFViewer({ pdfUrl, fileName, onPageChange }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   // Mobile: 55% zoom (0.55), Desktop: 115% zoom (1.15)
   const [scale, setScale] = useState<number>(
@@ -126,6 +127,13 @@ export default function PDFViewer({ pdfUrl, fileName }: PDFViewerProps) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Notify parent component when page changes
+  useEffect(() => {
+    if (onPageChange) {
+      onPageChange(currentPage);
+    }
+  }, [currentPage, onPageChange]);
 
   async function onDocumentLoadSuccess({ numPages }: any) {
     setNumPages(numPages);

@@ -27,7 +27,8 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
     if (isOpen && topics.length > 0) {
       fetchRecommendations();
     }
-  }, [isOpen, topics]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const fetchRecommendations = async () => {
     console.log('Fetching recommendations for topics:', topics);
@@ -78,10 +79,10 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
 
   return (
     <>
-      {/* Recommender Panel - Responsive positioning */}
-      <div className="fixed bottom-2 left-2 right-2 sm:bottom-6 sm:left-6 sm:right-auto z-50 sm:max-w-[800px] max-h-[85vh] sm:max-h-[600px]">
+      {/* Recommender Panel - Opens upward with better spacing */}
+      <div className="fixed bottom-16 sm:bottom-20 left-2 right-2 sm:left-6 sm:right-auto z-50 sm:max-w-[800px] max-h-[calc(100vh-180px)] sm:max-h-[500px]">
         <div
-          className="bg-white border-2 border-purple-500 shadow-2xl rounded-2xl overflow-y-auto animate-slideUp h-full flex flex-col"
+          className="bg-white border-2 border-purple-500 shadow-2xl rounded-2xl overflow-hidden flex flex-col"
           style={{ letterSpacing: '0', wordSpacing: 'normal' }}
         >
           {/* Header */}
@@ -143,9 +144,9 @@ export default function YouTubeRecommender({ topics, isOpen, onClose }: YouTubeR
             </div>
           )}
 
-          {/* Video Carousel */}
+          {/* Video Carousel - Scrollable content */}
           {!loading && videos.length > 0 && (
-            <div className="p-2 sm:p-4">
+            <div className="p-2 sm:p-4 overflow-y-auto flex-1">
               <div className="flex items-center gap-2 sm:gap-3">
                 {/* Previous Button */}
                 <button
