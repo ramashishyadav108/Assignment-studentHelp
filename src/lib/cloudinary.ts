@@ -37,7 +37,12 @@ export async function uploadPDFToCloudinary(
   try {
     // Generate a unique public_id using timestamp and original filename
     const timestamp = Date.now();
-    const cleanFileName = fileName.replace(/\.[^/.]+$/, ''); // Remove extension
+    // Remove extension and sanitize filename - remove all special characters except dash and underscore
+    const cleanFileName = fileName
+      .replace(/\.[^/.]+$/, '') // Remove extension
+      .replace(/[^a-zA-Z0-9_-]/g, '_') // Replace special chars with underscore
+      .replace(/_+/g, '_') // Replace multiple underscores with single
+      .replace(/^_+|_+$/g, ''); // Remove leading/trailing underscores
     const publicId = `${timestamp}-${cleanFileName}`;
 
     // Upload to Cloudinary with authenticated delivery
